@@ -28,7 +28,7 @@ Per the project's async/runtime design (agreed 2026-07-18):
 
 - **Event loop, `setTimeout`, promises, async fs** — Etapa C of the roadmap. The loop will live *here* (drain-jobs-then-poll, like `qjs`'s `js_std_loop`), driving the engine's public job-queue API; promise-fs arrives as blocking syscalls on a thread pool resolving promises via macrotasks.
 - **`setReadHandler`-style fd callbacks** (stdin/pipes/sockets) — same phase.
-- **Modules** (`import`/`export`) — engine roadmap item 14; `os` is a global until then.
+- ~~Modules~~ — implemented: every script now runs as an ES module (`interp.runModule`), with this repo's loader resolving **relative** specifiers (`./x.js`, `../y.js`) against each file's directory and reading through `std.Io`. Bare specifiers (`'lodash'`) are not resolved — no node_modules algorithm. `os` stays a global (it may become an importable module later).
 - **REPL**, node-style flags (`-e`, `-p`).
 - **Windows** — POSIX only, like the rest of the ecosystem.
 

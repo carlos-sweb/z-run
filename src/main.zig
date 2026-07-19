@@ -28,7 +28,9 @@ pub fn main(init: std.process.Init) !u8 {
     var script_args: std.ArrayList([]const u8) = .empty;
     while (args_it.next()) |a| try script_args.append(arena, a);
 
-    const source = std.Io.Dir.cwd().readFileAlloc(io, script_path, arena, max_script_bytes) catch |err| {
+    // Existence check up front for a clean CLI error (the loader's
+    // not-found becomes a JS-level error otherwise).
+    _ = std.Io.Dir.cwd().readFileAlloc(io, script_path, arena, max_script_bytes) catch |err| {
         try stderr.print("z-run: {t}: cannot open '{s}'\n", .{ err, script_path });
         try stderr.flush();
         return 1;
@@ -42,7 +44,13 @@ pub fn main(init: std.process.Init) !u8 {
     defer interp.deinit();
     try zrun.install(&interp, io, script_args.items);
 
-    _ = interp.run(source) catch |err| {
+    // Every script runs as a module (the engine is always-strict, so a
+    // script with no imports behaves identically) -- import/export just
+    // work, resolved relative to each file.
+    var loader_ctx = zrun.LoaderCtx{ .io = io };
+    interp.setModuleLoader(zrun.loader(&loader_ctx));
+
+    _ = interp.runModule(script_path) catch |err| {
         // console output emitted before the failure must still land, in
         // order, before the error report.
         try stdout.flush();
