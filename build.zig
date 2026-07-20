@@ -31,6 +31,30 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(exe);
 
+    // Self-contained binary: `zig build -Dscript=file.js [-Dname=app]` bakes
+    // the script into a standalone executable (engine + script), separate
+    // from the normal argv-reading z-run. Single-file (run as a script).
+    if (b.option([]const u8, "script", "Embed this .js and build a self-contained binary")) |script_path| {
+        const bin_name = b.option([]const u8, "name", "Output binary name for -Dscript") orelse "app";
+        const embed_module = b.createModule(.{
+            .root_source_file = b.path("src/embed_main.zig"),
+            .target = target,
+            .optimize = optimize,
+        });
+        embed_module.addImport("zrun", zrun_module);
+        embed_module.addImport("zinterpreter", zinterpreter_module);
+        embed_module.addImport("zvalue", zvalue_module);
+        // @embedFile("embedded_script") in embed_main.zig resolves here.
+        // Accept both build-root-relative and absolute -Dscript paths.
+        const script_lp: std.Build.LazyPath = if (std.fs.path.isAbsolute(script_path))
+            .{ .cwd_relative = script_path }
+        else
+            b.path(script_path);
+        embed_module.addAnonymousImport("embedded_script", .{ .root_source_file = script_lp });
+        const app = b.addExecutable(.{ .name = bin_name, .root_module = embed_module });
+        b.installArtifact(app);
+    }
+
     const test_step = b.step("test", "Run all tests");
 
     const test_files = [_][]const u8{

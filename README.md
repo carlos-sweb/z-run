@@ -49,6 +49,23 @@ console.log(words.length, 'words');
 
 The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 218-test suite covers.
 
+## Standalone binaries
+
+Bake a script into a self-contained executable (engine + script, no external `.js` needed at runtime) — `deno compile`-style, done at build time with `@embedFile`:
+
+```bash
+zig build install -Dscript=myfile.js -Dname=app -Doptimize=ReleaseSafe
+./zig-out/bin/app foo bar        # runs the baked-in script; foo/bar -> os.args
+```
+
+- `-Dscript=<path>` — the script to embed (relative to the build root, or absolute). Its presence builds an extra executable alongside the normal `z-run`.
+- `-Dname=<name>` — output binary name (default `app`).
+- Cross-compile like any Zig build: add `-Dtarget=aarch64-linux`, etc.
+
+The binary is fully self-contained (Zig links statically) and still *interprets* at startup — it packages the interpreter, it doesn't compile the JS to machine code. Exit codes and error reporting match the CLI (`Uncaught …` on stderr, exit 1).
+
+**Scope:** single-file scripts, run as a script (the engine is always-strict). `import`/`export` are **not** resolved in an embedded binary — bundle the module graph first, or use the plain `z-run <file>` CLI (which does resolve relative imports). A no-toolchain bundler (`z-run compile` appending the script to the executable) is a possible future addition.
+
 ## License
 
 MIT
