@@ -35,6 +35,7 @@ pub fn main(init: std.process.Init) !u8 {
     var interp = try zinterpreter.Interpreter.init(gpa, stdout);
     defer interp.deinit();
     try zrun.install(&interp, io, script_args.items);
+    try zrun.installYaml(&interp);
 
     _ = interp.run(embedded_source) catch |err| {
         try stdout.flush();
