@@ -47,10 +47,15 @@ fn yamlParse(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: [
     const self = interp(ctx);
     const text = arg(args, 0);
     if (text != .string) return self.throwError(.syntax_error, "YAML.parse requires a string", .{});
-    return zyaml.parse(allocator, text.string.value.data) catch |err| switch (err) {
-        error.OutOfMemory => error.OutOfMemory,
-        else => self.throwError(.syntax_error, "Unexpected token in YAML: {t}", .{err}),
+    const value = zyaml.parse(allocator, text.string.value.data) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        else => return self.throwError(.syntax_error, "Unexpected token in YAML: {t}", .{err}),
     };
+    // zyaml.parse builds the tree via z-value's raw constructors, bypassing
+    // gcNew*/gcTrack at every level -- see Interpreter.gcAdoptTree's doc
+    // comment (same gap JSON.parse had).
+    try self.gcAdoptTree(value);
+    return value;
 }
 
 /// `YAML.stringify(value)`: block-style YAML output.
@@ -62,5 +67,8 @@ fn yamlStringify(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, arg
         else => return self.throwError(.type_error, "Cannot stringify value to YAML: {t}", .{err}),
     };
     defer allocator.free(out);
-    return JSValue.newString(allocator, out);
+    // gcNewString, not a raw JSValue.newString -- same tracking gap
+    // yamlParse had (see gcAdoptTree's doc comment); jsonStringify in
+    // z-interpreter already gets this right.
+    return self.gcNewString(out);
 }
