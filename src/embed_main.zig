@@ -33,6 +33,7 @@ pub fn main(init: std.process.Init) !u8 {
     const stdout = &stdout_writer.interface;
 
     var interp = try zinterpreter.Interpreter.init(gpa, stdout);
+    interp.console_error_writer = stderr;
     defer interp.deinit();
     try zrun.install(&interp, io, script_args.items);
     try zrun.installYaml(&interp);
@@ -57,5 +58,6 @@ pub fn main(init: std.process.Init) !u8 {
     };
 
     try stdout.flush();
+    try stderr.flush();
     return 0;
 }
