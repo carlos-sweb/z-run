@@ -13,12 +13,16 @@ pub fn build(b: *std.Build) void {
     const zyaml_dep = b.dependency("zyaml", .{ .target = target, .optimize = optimize });
     const zyaml_module = zyaml_dep.module("zyaml");
 
+    const ztoml_dep = b.dependency("ztoml", .{ .target = target, .optimize = optimize });
+    const ztoml_module = ztoml_dep.module("ztoml");
+
     const zrun_module = b.addModule("zrun", .{
         .root_source_file = b.path("src/zrun.zig"),
     });
     zrun_module.addImport("zinterpreter", zinterpreter_module);
     zrun_module.addImport("zvalue", zvalue_module);
     zrun_module.addImport("zyaml", zyaml_module);
+    zrun_module.addImport("ztoml", ztoml_module);
 
     // The z-run executable.
     const exe_module = b.createModule(.{
@@ -64,6 +68,7 @@ pub fn build(b: *std.Build) void {
     const test_files = [_][]const u8{
         "tests/os_test.zig",
         "tests/yaml_test.zig",
+        "tests/toml_test.zig",
     };
 
     inline for (test_files) |test_file| {

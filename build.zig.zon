@@ -14,5 +14,6 @@
         .zinterpreter = .{ .path = "../z-interpreter" },
         .zvalue = .{ .path = "../z-value" },
         .zyaml = .{ .path = "../z-yaml" },
+        .ztoml = .{ .path = "../z-toml" },
     },
 }

@@ -45,6 +45,7 @@ pub fn main(init: std.process.Init) !u8 {
     defer interp.deinit();
     try zrun.install(&interp, io, script_args.items);
     try zrun.installYaml(&interp);
+    try zrun.installToml(&interp);
 
     // Every script runs as a module (the engine is always-strict, so a
     // script with no imports behaves identically) -- import/export just
