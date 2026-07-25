@@ -76,7 +76,11 @@ fn osReadFile(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: 
         return rc.interp.throwError(.generic, "{s}: cannot read file, open '{s}'", .{ @errorName(err), path });
     };
     defer allocator.free(bytes);
-    return JSValue.newString(allocator, bytes);
+    // gcNewString, not a raw JSValue.newString -- same GC-tracking gap
+    // JSON.parse/YAML.parse had (see Interpreter.gcAdoptTree's doc
+    // comment): an untracked value is invisible to freeAllGcNodes() and
+    // leaks unless the script's own refcounting happens to free it.
+    return rc.interp.gcNewString(bytes);
 }
 
 fn osWriteFile(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
