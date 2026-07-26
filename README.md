@@ -29,7 +29,7 @@ Per the project's async/runtime design (agreed 2026-07-18):
 - **Event loop, `setTimeout`, promises, async fs** — Etapa C of the roadmap. The loop will live *here* (drain-jobs-then-poll, like `qjs`'s `js_std_loop`), driving the engine's public job-queue API; promise-fs arrives as blocking syscalls on a thread pool resolving promises via macrotasks.
 - **`setReadHandler`-style fd callbacks** (stdin/pipes/sockets) — same phase.
 - ~~Modules~~ — implemented: every script now runs as an ES module (`interp.runModule`), with this repo's loader resolving **relative** specifiers (`./x.js`, `../y.js`) against each file's directory and reading through `std.Io`. Bare specifiers (`'lodash'`) are not resolved — no node_modules algorithm. `os` stays a global (it may become an importable module later).
-- **REPL**, node-style flags (`-e`, `-p`).
+- ~~REPL, node-style flags (`-e`, `-p`)~~ — implemented, see Usage below. Still missing: smart multi-line continuation (an unterminated statement is just a SyntaxError on that line, not a `...` continuation prompt), Ctrl+C handling, and line editing/history (raw stdin, no readline).
 - **Windows** — POSIX only, like the rest of the ecosystem.
 
 ## Usage
@@ -39,6 +39,46 @@ zig build install          # produces zig-out/bin/z-run
 zig build test             # library-level tests (real files on a tmp dir)
 ```
 
+```bash
+z-run count-words.js notes.txt      # run a script file
+z-run                                # REPL (bindings persist line to line)
+z-run -e "1 + 1" -p                  # eval a code string and print the result
+z-run -e "console.log('hi')"        # eval without printing (Node's -e behavior)
+z-run -v                             # print the version
+z-run -h                             # usage/help
+z-run script.js -- --foo             # `--` ends flag parsing; --foo lands in os.args
+```
+
+The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 218-test suite covers.
+
+## Examples
+
+**REPL** — a persistent session; bindings from one line are visible on the next (same `Interpreter`, its `script_env` is created once and reused), and a thrown exception doesn't end the session:
+
+```
+$ z-run
+> 1 + 1
+2
+> let x = 5; x * 2
+10
+> throw new Error('boom')
+Uncaught Error: boom
+> x + 1
+6
+> ^D
+$
+```
+
+**One-off eval** (`-e`/`--eval`, `-p`/`--print`):
+
+```bash
+z-run -e "console.log('hi')"              # hi              (like Node, -e alone doesn't auto-print)
+z-run -e "1 + 1" -p                       # 2
+z-run -e "[1, 2, 3].map(x => x * 2)" -p   # [2, 4, 6]
+```
+
+**A script reading a file and writing another, run with an argument:**
+
 ```js
 // count-words.js
 const text = os.readFile(os.args[0]);
@@ -47,7 +87,10 @@ os.writeFile('out.txt', String(words.length));
 console.log(words.length, 'words');
 ```
 
-The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 218-test suite covers.
+```bash
+$ z-run count-words.js notes.txt
+3 words
+```
 
 ## Standalone binaries
 

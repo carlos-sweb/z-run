@@ -1,3 +1,5 @@
+const std = @import("std");
+const zvalue = @import("zvalue");
 const os_globals = @import("os_globals.zig");
 const module_loader = @import("module_loader.zig");
 const yaml_globals = @import("yaml_globals.zig");
@@ -13,6 +15,22 @@ pub const installYaml = yaml_globals.install;
 /// Installs the `TOML` global (`TOML.parse`/`TOML.stringify`) -- same
 /// contract as `installYaml`.
 pub const installToml = toml_globals.install;
+
+/// Keep in sync with build.zig.zon's `.version` by hand -- no build-time
+/// plumbing for a single string.
+pub const version = "0.1.0";
+
+/// Formats an uncaught top-level exception the same way in every entry
+/// point (script file, `-e`, REPL) so error output never drifts between
+/// them.
+pub fn printUncaught(stderr: *std.Io.Writer, ex: zvalue.JSValue) !void {
+    switch (ex) {
+        .@"error" => |box| try stderr.print("Uncaught {s}: {s}\n", .{ box.value.kind.name(), box.value.message }),
+        .string => |box| try stderr.print("Uncaught '{s}'\n", .{box.value.data}),
+        .number => |n| try stderr.print("Uncaught {d}\n", .{n}),
+        else => try stderr.print("Uncaught [{s}]\n", .{ex.typeOf()}),
+    }
+}
 
 test {
     _ = @import("os_globals.zig");
