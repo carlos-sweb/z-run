@@ -4,6 +4,7 @@ const os_globals = @import("os_globals.zig");
 const module_loader = @import("module_loader.zig");
 const yaml_globals = @import("yaml_globals.zig");
 const toml_globals = @import("toml_globals.zig");
+const crypto_globals = @import("crypto_globals.zig");
 
 pub const install = os_globals.install;
 pub const RunCtx = os_globals.RunCtx;
@@ -15,6 +16,11 @@ pub const installYaml = yaml_globals.install;
 /// Installs the `TOML` global (`TOML.parse`/`TOML.stringify`) -- same
 /// contract as `installYaml`.
 pub const installToml = toml_globals.install;
+/// Attaches `os.crypto` (`uuid`/`random`/`hash`/`hmac`/`aead`/`password`)
+/// onto the ALREADY-installed `os` global -- call after `install`, not
+/// standalone (unlike `installYaml`/`installToml`, which add their own
+/// top-level globals and don't depend on `os` existing yet).
+pub const installCrypto = crypto_globals.install;
 
 /// Keep in sync with build.zig.zon's `.version` by hand -- no build-time
 /// plumbing for a single string.
@@ -37,4 +43,5 @@ test {
     _ = @import("module_loader.zig");
     _ = @import("yaml_globals.zig");
     _ = @import("toml_globals.zig");
+    _ = @import("crypto_globals.zig");
 }

@@ -16,6 +16,12 @@ pub fn build(b: *std.Build) void {
     const ztoml_dep = b.dependency("ztoml", .{ .target = target, .optimize = optimize });
     const ztoml_module = ztoml_dep.module("ztoml");
 
+    const zuuid_dep = b.dependency("zuuid", .{ .target = target, .optimize = optimize });
+    const zuuid_module = zuuid_dep.module("zuuid");
+
+    const zcrypto_dep = b.dependency("zcrypto", .{ .target = target, .optimize = optimize });
+    const zcrypto_module = zcrypto_dep.module("zcrypto");
+
     const zrun_module = b.addModule("zrun", .{
         .root_source_file = b.path("src/zrun.zig"),
     });
@@ -23,6 +29,8 @@ pub fn build(b: *std.Build) void {
     zrun_module.addImport("zvalue", zvalue_module);
     zrun_module.addImport("zyaml", zyaml_module);
     zrun_module.addImport("ztoml", ztoml_module);
+    zrun_module.addImport("zuuid", zuuid_module);
+    zrun_module.addImport("zcrypto", zcrypto_module);
 
     // The z-run executable.
     const exe_module = b.createModule(.{
@@ -69,6 +77,7 @@ pub fn build(b: *std.Build) void {
         "tests/os_test.zig",
         "tests/yaml_test.zig",
         "tests/toml_test.zig",
+        "tests/crypto_test.zig",
     };
 
     inline for (test_files) |test_file| {
