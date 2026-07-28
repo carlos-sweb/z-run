@@ -153,6 +153,95 @@ test "os.crypto.aead.encrypt with a wrong-length key is a catchable RangeError" 
     try testing.expectEqualStrings("RangeError true\n", ctx.allocating.written());
 }
 
+test "os.crypto.base32 round-trips through real JS" {
+    var ctx = try Ctx.init();
+    defer ctx.deinit();
+    _ = try ctx.interp.run(
+        \\const encoded = os.crypto.base32.encode('foobar');
+        \\const decoded = os.crypto.base32.decode(encoded);
+        \\function bytesToString(arr) {
+        \\  let s = '';
+        \\  for (let i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]);
+        \\  return s;
+        \\}
+        \\console.log(encoded, bytesToString(decoded) === 'foobar');
+    );
+    try testing.expectEqualStrings("MZXW6YTBOI====== true\n", ctx.allocating.written());
+}
+
+test "os.crypto.totp matches the RFC 4226 known-answer vector through real JS" {
+    var ctx = try Ctx.init();
+    defer ctx.deinit();
+    _ = try ctx.interp.run(
+        \\console.log(os.crypto.totp.hotp('12345678901234567890', 0, 6));
+    );
+    try testing.expectEqualStrings("755224\n", ctx.allocating.written());
+}
+
+test "os.crypto.totp.totp matches the RFC 6238 known-answer vector through real JS" {
+    var ctx = try Ctx.init();
+    defer ctx.deinit();
+    _ = try ctx.interp.run(
+        \\console.log(os.crypto.totp.totp('12345678901234567890', 59, 30, 8));
+    );
+    try testing.expectEqualStrings("94287082\n", ctx.allocating.written());
+}
+
+test "os.crypto.totp.verifyTotp accepts the right code and a window, rejects a wrong one" {
+    var ctx = try Ctx.init();
+    defer ctx.deinit();
+    _ = try ctx.interp.run(
+        \\const secret = '12345678901234567890';
+        \\const exact = os.crypto.totp.verifyTotp(secret, '94287082', 59, 30, 8, 0);
+        \\const wrong = os.crypto.totp.verifyTotp(secret, '00000000', 59, 30, 8, 0);
+        \\const drifted = os.crypto.totp.verifyTotp(secret, '94287082', 59 + 30, 30, 8, 1);
+        \\console.log(exact, wrong, drifted);
+    );
+    try testing.expectEqualStrings("true false true\n", ctx.allocating.written());
+}
+
+test "os.crypto.totp.hotp rejects out-of-range digits as a catchable RangeError" {
+    var ctx = try Ctx.init();
+    defer ctx.deinit();
+    _ = try ctx.interp.run(
+        \\try {
+        \\  os.crypto.totp.hotp('12345678901234567890', 0, 10);
+        \\  console.log('no error');
+        \\} catch (e) {
+        \\  console.log(e.name, e.message.includes('digits'));
+        \\}
+    );
+    try testing.expectEqualStrings("RangeError true\n", ctx.allocating.written());
+}
+
+test "os.crypto.jws round-trips through real JS" {
+    var ctx = try Ctx.init();
+    defer ctx.deinit();
+    _ = try ctx.interp.run(
+        \\const header = '{"alg":"HS256"}';
+        \\const payload = '{"sub":"1"}';
+        \\const token = os.crypto.jws.sign(header, payload, 'jwt-key');
+        \\const verified = os.crypto.jws.verify(token, 'jwt-key');
+        \\console.log(verified.header === header, verified.payload === payload);
+    );
+    try testing.expectEqualStrings("true true\n", ctx.allocating.written());
+}
+
+test "os.crypto.jws.verify with the wrong key is a catchable error" {
+    var ctx = try Ctx.init();
+    defer ctx.deinit();
+    _ = try ctx.interp.run(
+        \\const token = os.crypto.jws.sign('{}', '{}', 'right-key');
+        \\try {
+        \\  os.crypto.jws.verify(token, 'wrong-key');
+        \\  console.log('no error');
+        \\} catch (e) {
+        \\  console.log(e.name, e.message.includes('JWS'));
+        \\}
+    );
+    try testing.expectEqualStrings("Error true\n", ctx.allocating.written());
+}
+
 test "os.crypto.password hash/verify round-trips through real JS" {
     var ctx = try Ctx.init();
     defer ctx.deinit();

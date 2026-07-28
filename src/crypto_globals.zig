@@ -48,6 +48,20 @@ pub fn install(interp: *Interpreter, io: std.Io) !void {
     try password_obj.object.value.set("hash", try native(arena, ctx, "hash", passwordHash));
     try password_obj.object.value.set("verify", try native(arena, ctx, "verify", passwordVerify));
 
+    var base32_obj = try JSValue.newObject(arena);
+    try base32_obj.object.value.set("encode", try native(arena, ctx, "encode", base32Encode));
+    try base32_obj.object.value.set("decode", try native(arena, ctx, "decode", base32Decode));
+
+    var totp_obj = try JSValue.newObject(arena);
+    try totp_obj.object.value.set("hotp", try native(arena, ctx, "hotp", totpHotp));
+    try totp_obj.object.value.set("totp", try native(arena, ctx, "totp", totpTotp));
+    try totp_obj.object.value.set("totpNow", try native(arena, ctx, "totpNow", totpTotpNow));
+    try totp_obj.object.value.set("verifyTotp", try native(arena, ctx, "verifyTotp", totpVerify));
+
+    var jws_obj = try JSValue.newObject(arena);
+    try jws_obj.object.value.set("sign", try native(arena, ctx, "sign", jwsSign));
+    try jws_obj.object.value.set("verify", try native(arena, ctx, "verify", jwsVerify));
+
     var crypto_obj = try JSValue.newObject(arena);
     try crypto_obj.object.value.set("uuid", uuid_obj);
     try crypto_obj.object.value.set("random", random_obj);
@@ -55,6 +69,9 @@ pub fn install(interp: *Interpreter, io: std.Io) !void {
     try crypto_obj.object.value.set("hmac", hmac_obj);
     try crypto_obj.object.value.set("aead", aead_obj);
     try crypto_obj.object.value.set("password", password_obj);
+    try crypto_obj.object.value.set("base32", base32_obj);
+    try crypto_obj.object.value.set("totp", totp_obj);
+    try crypto_obj.object.value.set("jws", jws_obj);
 
     try os_val.object.value.set("crypto", crypto_obj);
 }
@@ -95,6 +112,21 @@ fn requireInteger(rc: *RunCtx, v: JSValue, what: []const u8) anyerror!i64 {
         return rc.interp.throwError(.type_error, "{s} must be an integer", .{what});
     }
     return @intFromFloat(n);
+}
+
+fn requireUnsignedInt(rc: *RunCtx, v: JSValue, what: []const u8, comptime T: type) anyerror!T {
+    const n = try requireInteger(rc, v, what);
+    if (n < 0) return rc.interp.throwError(.range_error, "{s} must be >= 0", .{what});
+    return @intCast(n);
+}
+
+/// `zcrypto.totp.hotp`/`.totp`/`.totpNow` assert `1 <= digits <= 9` --
+/// validated here as a catchable range_error so a bad JS call can't hit
+/// that assert (a crash, not a catchable error).
+fn requireDigits(rc: *RunCtx, v: JSValue) anyerror!u8 {
+    const n = try requireInteger(rc, v, "digits");
+    if (n < 1 or n > 9) return rc.interp.throwError(.range_error, "digits must be between 1 and 9", .{});
+    return @intCast(n);
 }
 
 /// Copies `bytes` into a fresh `ArrayBuffer` and wraps it as a `Uint8Array`.
@@ -267,4 +299,108 @@ fn passwordVerify(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, ar
         return rc.interp.throwError(.generic, "password verification failed: {t}", .{err});
     };
     return JSValue.fromBool(ok);
+}
+
+fn base32Encode(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const data = try coerceBytes(rc, arg(args, 0), "data");
+    const encoded = try zcrypto.base32.encodeAlloc(allocator, data);
+    defer allocator.free(encoded);
+    return rc.interp.gcNewString(encoded);
+}
+
+fn base32Decode(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const encoded = try coerceBytes(rc, arg(args, 0), "encoded");
+    const data = zcrypto.base32.decodeAlloc(allocator, encoded) catch |err| {
+        return rc.interp.throwError(.generic, "base32 decode failed: {t}", .{err});
+    };
+    defer allocator.free(data);
+    return bytesToUint8Array(rc, data);
+}
+
+fn totpHotp(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = allocator;
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const secret = try coerceBytes(rc, arg(args, 0), "secret");
+    const counter = try requireUnsignedInt(rc, arg(args, 1), "counter", u64);
+    const digits = try requireDigits(rc, arg(args, 2));
+
+    var buf: [9]u8 = undefined;
+    const code = zcrypto.totp.hotp(secret, counter, digits, &buf);
+    return rc.interp.gcNewString(code);
+}
+
+fn totpTotp(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = allocator;
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const secret = try coerceBytes(rc, arg(args, 0), "secret");
+    const unix_time = try requireInteger(rc, arg(args, 1), "unixTime");
+    const step = try requireUnsignedInt(rc, arg(args, 2), "stepSeconds", u64);
+    const digits = try requireDigits(rc, arg(args, 3));
+
+    var buf: [9]u8 = undefined;
+    const code = zcrypto.totp.totp(secret, unix_time, step, digits, &buf);
+    return rc.interp.gcNewString(code);
+}
+
+fn totpTotpNow(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = allocator;
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const secret = try coerceBytes(rc, arg(args, 0), "secret");
+    const step = try requireUnsignedInt(rc, arg(args, 1), "stepSeconds", u64);
+    const digits = try requireDigits(rc, arg(args, 2));
+
+    var buf: [9]u8 = undefined;
+    const code = zcrypto.totp.totpNow(secret, rc.io, step, digits, &buf);
+    return rc.interp.gcNewString(code);
+}
+
+fn totpVerify(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = allocator;
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const secret = try coerceBytes(rc, arg(args, 0), "secret");
+    const code = try coerceBytes(rc, arg(args, 1), "code");
+    const unix_time = try requireInteger(rc, arg(args, 2), "unixTime");
+    const step = try requireUnsignedInt(rc, arg(args, 3), "stepSeconds", u64);
+    const digits = try requireDigits(rc, arg(args, 4));
+    const window = try requireUnsignedInt(rc, arg(args, 5), "window", u32);
+
+    const ok = zcrypto.totp.verifyTotp(secret, code, unix_time, step, digits, window);
+    return JSValue.fromBool(ok);
+}
+
+fn jwsSign(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const header_json = try coerceBytes(rc, arg(args, 0), "headerJson");
+    const payload_json = try coerceBytes(rc, arg(args, 1), "payloadJson");
+    const key = try coerceBytes(rc, arg(args, 2), "key");
+
+    const token = try zcrypto.jws.sign(allocator, header_json, payload_json, key);
+    defer allocator.free(token);
+    return rc.interp.gcNewString(token);
+}
+
+fn jwsVerify(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
+    _ = this_value;
+    const rc = runCtx(ctx);
+    const token = try coerceBytes(rc, arg(args, 0), "token");
+    const key = try coerceBytes(rc, arg(args, 1), "key");
+
+    const verified = zcrypto.jws.verify(allocator, token, key) catch |err| {
+        return rc.interp.throwError(.generic, "JWS verification failed: {t}", .{err});
+    };
+    defer verified.deinit(allocator);
+
+    var result = try rc.interp.gcNewObject();
+    try result.object.value.set("header", try rc.interp.gcNewString(verified.header_json));
+    try result.object.value.set("payload", try rc.interp.gcNewString(verified.payload_json));
+    return result;
 }
