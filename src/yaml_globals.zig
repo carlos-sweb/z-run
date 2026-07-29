@@ -6,15 +6,19 @@
 //! implicit typing -- no anchors/aliases/tags/block-scalars/multi-doc).
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const build_options = @import("build_options");
 const zinterpreter = @import("zinterpreter");
 const zvalue = @import("zvalue");
-const zyaml = @import("zyaml");
+const zyaml = if (build_options.enable_yaml) @import("zyaml") else void;
 const JSValue = zvalue.JSValue;
 const Interpreter = zinterpreter.Interpreter;
 
 /// Installs the `YAML` global: `YAML.parse(str)` / `YAML.stringify(value)`.
 /// Call before the first `run()` (same contract as `os_globals.install`).
+/// A no-op when `-Dyaml=false`.
 pub fn install(interpreter: *Interpreter) !void {
+    if (comptime !build_options.enable_yaml) return;
+
     const arena = interpreter.arena_state.allocator();
 
     var yaml_obj = try JSValue.newObject(arena);

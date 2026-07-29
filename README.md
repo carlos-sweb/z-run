@@ -92,6 +92,18 @@ $ z-run count-words.js notes.txt
 3 words
 ```
 
+## Compile-time feature flags
+
+`os.crypto`/`YAML`/`TOML` are host extensions (not ECMA-262), so they can be compiled out — the disabled sibling dependency (`z-crypto`/`z-uuid`/`z-yaml`/`z-toml`) is never fetched, built, or linked, and the corresponding global/property is simply never attached, all default `true`:
+
+```bash
+zig build install -Dyaml=false -Dtoml=false      # drop the YAML/TOML globals entirely
+zig build install -Dcrypto=false                  # drop os.crypto.* entirely
+zig build install -Dcrypto-uuid=false              # keep os.crypto.* but forget os.crypto.uuid.*
+```
+
+Finer sub-namespace flags exist within `crypto`, each implicitly ANDed with the `-Dcrypto` master switch: `-Dcrypto-uuid`, `-Dcrypto-random`, `-Dcrypto-hash`, `-Dcrypto-hmac`, `-Dcrypto-aead`, `-Dcrypto-password`, `-Dcrypto-base32`, `-Dcrypto-totp`, `-Dcrypto-jws`. Run `zig build --help` for the full, self-documenting list.
+
 ## Standalone binaries
 
 Bake a script into a self-contained executable (engine + script, no external `.js` needed at runtime) — `deno compile`-style, done at build time with `@embedFile`:
