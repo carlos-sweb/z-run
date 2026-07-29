@@ -94,17 +94,18 @@ $ z-run count-words.js notes.txt
 
 ## Compile-time feature flags
 
-`os.crypto`/`YAML`/`TOML` are host extensions (not ECMA-262), so they can be compiled out — the disabled sibling dependency (`z-crypto`/`z-uuid`/`z-yaml`/`z-toml`) is never fetched, built, or linked, and the corresponding global/property is simply never attached, all default `true`:
+`os.crypto`/`os.argsParser`/`YAML`/`TOML` are host extensions (not ECMA-262), so they can be compiled out — the disabled sibling dependency (`z-crypto`/`z-uuid`/`z-yaml`/`z-toml`/`z-args`) is never fetched, built, or linked, and the corresponding global/property is simply never attached, all default `true`:
 
 ```bash
 zig build install -Dyaml=false -Dtoml=false      # drop the YAML/TOML globals entirely
+zig build install -Dargs=false                    # drop os.argsParser.* entirely
 zig build install -Dcrypto=false                  # drop os.crypto.* entirely
 zig build install -Dcrypto-uuid=false              # keep os.crypto.* but forget os.crypto.uuid.*
 ```
 
 Finer sub-namespace flags exist within `crypto`, each implicitly ANDed with the `-Dcrypto` master switch: `-Dcrypto-uuid`, `-Dcrypto-random`, `-Dcrypto-hash`, `-Dcrypto-hmac`, `-Dcrypto-aead`, `-Dcrypto-password`, `-Dcrypto-base32`, `-Dcrypto-totp`, `-Dcrypto-jws`. Run `zig build --help` for the full, self-documenting list.
 
-## Library reference: YAML, TOML, os.crypto
+## Library reference: YAML, TOML, os.crypto, os.argsParser
 
 Every function below is runnable as-is against `z-run script.js`. Byte outputs (`Uint8Array`, from `hash`/`hmac`/`aead`/`random.bytes`/`base32.decode`) don't support `Array.from`/spread yet (a known engine gap — index/`.length` work fine), so the examples read them back with a plain index loop or round-trip them through `os.crypto.base32.encode` for a printable form.
 
@@ -226,6 +227,33 @@ const token = os.crypto.jws.sign(header, payload, 'jws-signing-key');
 const verified = os.crypto.jws.verify(token, 'jws-signing-key');
 JSON.parse(verified.payload).sub; // "carlos"
 ```
+
+### `os.argsParser.simple(argv, specs)` — POSIX/GNU-style flag tokenizer
+
+Binds only [z-args](https://github.com/carlos-sweb/z-args)' `Simple` tier — a `getopt_long`-style tokenizer with no auto-help and no cross-flag validation, one token per element, and (unlike a strict parser) it keeps going past an unknown flag instead of aborting. `z-args`' other three tiers (`Builder`/`Declarative`/`Commands`) are **not** exposed here: `Declarative` needs a Zig type known at compile time, which a runtime JS value structurally can never provide; `Commands`/`Builder` would need new interpreter-side machinery (persistent native objects, JS-callback dispatch) this pass deliberately didn't add.
+
+Each spec is `{ short?: string, long?: string, kind?: 'flag' | 'value' }` (`kind` defaults to `'flag'`); each returned token is `{ type, short?, long?, value? }`, where `type` is one of `'flag'`/`'option'`/`'positional'`/`'unknownOption'`/`'missingValue'`/`'unexpectedValue'` and absent fields read as `undefined`:
+
+```js
+// args_demo.js
+const tokens = os.argsParser.simple(os.args, [
+  { short: 'v', long: 'verbose' },
+  { short: 'o', long: 'output', kind: 'value' },
+]);
+for (const t of tokens) {
+  console.log(t.type, t.short, t.long, t.value);
+}
+```
+
+```bash
+$ z-run args_demo.js -- -v -o out.txt file.txt --bogus
+flag v verbose undefined
+option o output out.txt
+positional undefined undefined file.txt
+unknownOption undefined bogus undefined
+```
+
+(the `--` is z-run's own flag terminator, not the script's — see Usage above; without it, `-v` would be parsed as z-run's `--version` instead of reaching `os.args`.)
 
 ## Standalone binaries
 

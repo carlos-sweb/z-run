@@ -11,6 +11,7 @@ pub fn build(b: *std.Build) void {
     // gated by the `crypto` master switch (see `enable_crypto_*` below).
     const enable_yaml = b.option(bool, "yaml", "Enable the YAML global (YAML.parse/stringify)") orelse true;
     const enable_toml = b.option(bool, "toml", "Enable the TOML global (TOML.parse/stringify)") orelse true;
+    const enable_args = b.option(bool, "args", "Enable the os.argsParser.* namespace (z-args' Simple tier)") orelse true;
     const enable_crypto = b.option(bool, "crypto", "Enable the os.crypto.* namespace (master switch)") orelse true;
     const enable_crypto_uuid = enable_crypto and (b.option(bool, "crypto-uuid", "Enable os.crypto.uuid.*") orelse true);
     const enable_crypto_random = enable_crypto and (b.option(bool, "crypto-random", "Enable os.crypto.random.*") orelse true);
@@ -25,6 +26,7 @@ pub fn build(b: *std.Build) void {
     const feature_options = b.addOptions();
     feature_options.addOption(bool, "enable_yaml", enable_yaml);
     feature_options.addOption(bool, "enable_toml", enable_toml);
+    feature_options.addOption(bool, "enable_args", enable_args);
     feature_options.addOption(bool, "enable_crypto", enable_crypto);
     feature_options.addOption(bool, "enable_crypto_uuid", enable_crypto_uuid);
     feature_options.addOption(bool, "enable_crypto_random", enable_crypto_random);
@@ -62,6 +64,10 @@ pub fn build(b: *std.Build) void {
     if (enable_toml) {
         const ztoml_dep = b.dependency("ztoml", .{ .target = target, .optimize = optimize });
         zrun_module.addImport("ztoml", ztoml_dep.module("ztoml"));
+    }
+    if (enable_args) {
+        const zargs_dep = b.dependency("zargs", .{ .target = target, .optimize = optimize });
+        zrun_module.addImport("zargs", zargs_dep.module("zargs"));
     }
     if (enable_crypto_uuid) {
         const zuuid_dep = b.dependency("zuuid", .{ .target = target, .optimize = optimize });
@@ -118,6 +124,7 @@ pub fn build(b: *std.Build) void {
         "tests/yaml_test.zig",
         "tests/toml_test.zig",
         "tests/crypto_test.zig",
+        "tests/args_test.zig",
     };
 
     inline for (test_files) |test_file| {

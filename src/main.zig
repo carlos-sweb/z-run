@@ -138,6 +138,7 @@ pub fn main(init: std.process.Init) !u8 {
             try zrun.installYaml(&interp);
             try zrun.installToml(&interp);
             try zrun.installCrypto(&interp, io);
+            try zrun.installArgsParser(&interp);
 
             // Every script runs as a module (the engine is always-strict, so
             // a script with no imports behaves identically) -- import/export
@@ -170,6 +171,7 @@ pub fn main(init: std.process.Init) !u8 {
             try zrun.installYaml(&interp);
             try zrun.installToml(&interp);
             try zrun.installCrypto(&interp, io);
+            try zrun.installArgsParser(&interp);
 
             const result = interp.run(args.eval_code.?) catch |err| {
                 try stdout.flush();
@@ -202,6 +204,7 @@ pub fn main(init: std.process.Init) !u8 {
             try zrun.installYaml(&interp);
             try zrun.installToml(&interp);
             try zrun.installCrypto(&interp, io);
+            try zrun.installArgsParser(&interp);
 
             return try repl.run(&interp, io, stdout, stderr);
         },

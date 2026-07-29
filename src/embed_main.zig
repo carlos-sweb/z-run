@@ -39,6 +39,7 @@ pub fn main(init: std.process.Init) !u8 {
     try zrun.installYaml(&interp);
     try zrun.installToml(&interp);
     try zrun.installCrypto(&interp, io);
+    try zrun.installArgsParser(&interp);
 
     _ = interp.run(embedded_source) catch |err| {
         try stdout.flush();

@@ -17,5 +17,6 @@
         .ztoml = .{ .path = "../z-toml" },
         .zuuid = .{ .path = "../z-uuid" },
         .zcrypto = .{ .path = "../z-crypto" },
+        .zargs = .{ .path = "../z-args" },
     },
 }
