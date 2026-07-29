@@ -104,6 +104,129 @@ zig build install -Dcrypto-uuid=false              # keep os.crypto.* but forget
 
 Finer sub-namespace flags exist within `crypto`, each implicitly ANDed with the `-Dcrypto` master switch: `-Dcrypto-uuid`, `-Dcrypto-random`, `-Dcrypto-hash`, `-Dcrypto-hmac`, `-Dcrypto-aead`, `-Dcrypto-password`, `-Dcrypto-base32`, `-Dcrypto-totp`, `-Dcrypto-jws`. Run `zig build --help` for the full, self-documenting list.
 
+## Library reference: YAML, TOML, os.crypto
+
+Every function below is runnable as-is against `z-run script.js`. Byte outputs (`Uint8Array`, from `hash`/`hmac`/`aead`/`random.bytes`/`base32.decode`) don't support `Array.from`/spread yet (a known engine gap — index/`.length` work fine), so the examples read them back with a plain index loop or round-trip them through `os.crypto.base32.encode` for a printable form.
+
+### YAML — `YAML.parse` / `YAML.stringify`
+
+Load a file, read and mutate it as a plain object, write it back:
+
+```js
+// yaml_demo.js
+const config = YAML.parse(os.readFile('config.yaml'));
+console.log(config.name, config.version, config.features.join(','));
+
+config.features.push('crypto');
+config.updated = true;
+os.writeFile('config.yaml', YAML.stringify(config));
+```
+
+```bash
+$ z-run yaml_demo.js
+z-run 0.1.0 yaml,toml
+```
+
+### TOML — `TOML.parse` / `TOML.stringify`
+
+```js
+TOML.stringify({ name: 'z-run', version: '0.1.0', author: { name: 'carlos' } });
+// name = "z-run"
+// version = "0.1.0"
+//
+// [author]
+// name = "carlos"
+
+const parsed = TOML.parse(os.readFile('config.toml'));
+console.log(parsed.name, parsed.author.name); // z-run carlos
+```
+
+### `os.crypto.uuid` — `v4()` / `v7()`
+
+```js
+os.crypto.uuid.v4(); // "0146e136-7239-4405-aabb-aaba0b01ace0" -- random
+os.crypto.uuid.v7(); // "019fabc1-5fed-7869-9317-7b55556d3024" -- time-ordered (RFC 9562)
+```
+
+### `os.crypto.random` — `bytes(n)` / `int(min, max)` / `string(len[, alphabet])`
+
+```js
+os.crypto.random.bytes(8);                          // Uint8Array(8), CSPRNG
+os.crypto.random.int(1, 6);                          // e.g. 5 -- dice roll, inclusive range
+os.crypto.random.string(12);                         // e.g. "w10vaR6EDO0T" -- default alphanumeric alphabet
+os.crypto.random.string(8, 'ABCDEF0123456789');      // e.g. "790451C1" -- custom alphabet
+```
+
+### `os.crypto.hash` — `sha256` / `sha512` / `blake3`
+
+Same signature for all three (`(data) -> Uint8Array`), shown here via `base32.encode` for a printable digest:
+
+```js
+os.crypto.base32.encode(os.crypto.hash.sha256('hello'));
+// PF3UBEAULQ7SMOLJ35SZWVYGXKQ5AMCF2P2VAAWPC7NFJZ4I7QRA====
+os.crypto.base32.encode(os.crypto.hash.blake3('hello'));
+```
+
+### `os.crypto.hmac` — `sha256(key, data)` / `sha512(key, data)`
+
+```js
+os.crypto.base32.encode(os.crypto.hmac.sha256('secret-key', 'message to authenticate'));
+```
+
+### `os.crypto.aead` — `encrypt(key, plaintext[, aad])` / `decrypt(key, blob[, aad])`
+
+XChaCha20-Poly1305, 32-byte key, `decrypt` throws a catchable error on tampering/wrong key:
+
+```js
+const key = os.crypto.random.bytes(32);
+const blob = os.crypto.aead.encrypt(key, 'attack at dawn');
+const plaintext = os.crypto.aead.decrypt(key, blob);   // Uint8Array back to "attack at dawn"
+```
+
+### `os.crypto.password` — `hash(password)` / `verify(hash, password)`
+
+Argon2id, self-describing PHC string (no separate salt to manage):
+
+```js
+const phc = os.crypto.password.hash('correct horse battery staple');
+// $argon2id$v=19$m=19456,t=2,p=1$...
+os.crypto.password.verify(phc, 'correct horse battery staple'); // true
+os.crypto.password.verify(phc, 'wrong password');               // false
+```
+
+### `os.crypto.base32` — `encode(data)` / `decode(encoded)`
+
+```js
+const encoded = os.crypto.base32.encode('hello world'); // "NBSWY3DPEB3W64TMMQ======"
+os.crypto.base32.decode(encoded);                        // Uint8Array back to "hello world"
+```
+
+### `os.crypto.totp` — `hotp` / `totp` / `totpNow` / `verifyTotp`
+
+RFC 4226/6238. `digits` must be 1–9; `window` on `verifyTotp` tolerates clock drift (in steps):
+
+```js
+const secret = 'my-shared-secret';
+os.crypto.totp.hotp(secret, 0, 6);                  // "864426" -- counter-based (RFC 4226)
+os.crypto.totp.totp(secret, 1700000000, 30, 6);     // "664446" -- fixed unixTime, 30s step
+os.crypto.totp.totpNow(secret, 30, 6);              // code for the current time
+os.crypto.totp.verifyTotp(secret, code, Math.floor(Date.now() / 1000), 30, 6, /* window */ 1);
+```
+
+### `os.crypto.jws` — `sign(headerJson, payloadJson, key)` / `verify(token, key)`
+
+Compact JWS, HS256 only. Headers/payloads are caller-serialized JSON — `jws`, not `jwt`: no claim validation, just signature integrity:
+
+```js
+const header = JSON.stringify({ alg: 'HS256', typ: 'JWT' });
+const payload = JSON.stringify({ sub: 'carlos', admin: true });
+const token = os.crypto.jws.sign(header, payload, 'jws-signing-key');
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYXJsb3MiLCJhZG1pbiI6dHJ1ZX0....
+
+const verified = os.crypto.jws.verify(token, 'jws-signing-key');
+JSON.parse(verified.payload).sub; // "carlos"
+```
+
 ## Standalone binaries
 
 Bake a script into a self-contained executable (engine + script, no external `.js` needed at runtime) — `deno compile`-style, done at build time with `@embedFile`:
