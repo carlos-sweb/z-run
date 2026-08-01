@@ -52,11 +52,20 @@ pub fn build(b: *std.Build) void {
     zrun_module.addImport("zvalue", zvalue_module);
     zrun_module.addImport("build_options", build_options_module);
 
-    // Each sibling is only fetched/built/linked when its flag is on -- an
-    // `if (comptime !build_options.enable_x) return;` guard at the top of
-    // the corresponding `*_globals.zig install()` means the disabled
-    // module's import is never referenced, so it's fine for it to not
-    // exist in the import table at all.
+    // zargs is a mandatory import of zrun_module now (unlike the
+    // conditionally-fetched siblings below): `compile_cmd.zig` (the
+    // `z-run compile` subcommand) always needs its Declarative tier,
+    // independent of `-Dargs` -- that flag only gates the JS-visible
+    // `os.argsParser.*` surface (see `args_globals.zig`'s own
+    // `if (comptime !build_options.enable_args) return;` guard).
+    const zargs_dep = b.dependency("zargs", .{ .target = target, .optimize = optimize });
+    zrun_module.addImport("zargs", zargs_dep.module("zargs"));
+
+    // Each sibling below is only fetched/built/linked when its flag is on
+    // -- an `if (comptime !build_options.enable_x) return;` guard at the
+    // top of the corresponding `*_globals.zig install()` means the
+    // disabled module's import is never referenced, so it's fine for it
+    // to not exist in the import table at all.
     if (enable_yaml) {
         const zyaml_dep = b.dependency("zyaml", .{ .target = target, .optimize = optimize });
         zrun_module.addImport("zyaml", zyaml_dep.module("zyaml"));
@@ -64,10 +73,6 @@ pub fn build(b: *std.Build) void {
     if (enable_toml) {
         const ztoml_dep = b.dependency("ztoml", .{ .target = target, .optimize = optimize });
         zrun_module.addImport("ztoml", ztoml_dep.module("ztoml"));
-    }
-    if (enable_args) {
-        const zargs_dep = b.dependency("zargs", .{ .target = target, .optimize = optimize });
-        zrun_module.addImport("zargs", zargs_dep.module("zargs"));
     }
     if (enable_crypto_uuid) {
         const zuuid_dep = b.dependency("zuuid", .{ .target = target, .optimize = optimize });
@@ -125,6 +130,8 @@ pub fn build(b: *std.Build) void {
         "tests/toml_test.zig",
         "tests/crypto_test.zig",
         "tests/args_test.zig",
+        "tests/payload_test.zig",
+        "tests/compile_cmd_test.zig",
     };
 
     inline for (test_files) |test_file| {

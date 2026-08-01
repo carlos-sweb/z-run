@@ -2,8 +2,10 @@
 //! `z-run <script.js> [args...]` -- reads the script, runs it with the
 //! `os` global installed (synchronous fs, script args), console on real
 //! stdout. Also supports `-e/--eval <code>` (optionally `-p/--print`),
-//! a REPL (no script/`-e` given), `-v/--version`, `-h/--help`. Exit
-//! codes: 0 ok, 1 uncaught exception / parse error / usage.
+//! a REPL (no script/`-e` given), `-v/--version`, `-h/--help`,
+//! `compile <script.js> -o <output>` (bake a standalone binary, see
+//! `compile_cmd.zig`). Exit codes: 0 ok, 1 uncaught exception / parse
+//! error / usage.
 const std = @import("std");
 const zinterpreter = @import("zinterpreter");
 const zvalue = @import("zvalue");
@@ -14,6 +16,7 @@ const max_script_bytes: std.Io.Limit = .limited(64 * 1024 * 1024);
 
 const usage_text =
     \\usage: z-run [options] [script.js] [args...]
+    \\       z-run compile <script.js> -o <output> [-f]
     \\
     \\options:
     \\  -e, --eval <code>   evaluate <code> instead of a script file
@@ -23,6 +26,9 @@ const usage_text =
     \\  --                  treat every following argument as positional
     \\
     \\with no script and no -e, starts a REPL.
+    \\
+    \\`compile` bakes a script into a standalone executable -- see
+    \\`z-run compile -h` for its own options.
     \\
 ;
 
@@ -100,15 +106,70 @@ pub fn main(init: std.process.Init) !u8 {
     var stderr_writer = std.Io.File.stderr().writer(io, &stderr_buf);
     const stderr = &stderr_writer.interface;
 
+    var stdout_buf: [4096]u8 = undefined;
+    var stdout_writer = std.Io.File.stdout().writer(io, &stdout_buf);
+    const stdout = &stdout_writer.interface;
+
+    // Self-extracting payload check (`z-run compile`, A2 -- see
+    // payload.zig): if THIS binary has a script appended, run it instead
+    // of behaving like normal z-run, with every argv[1..] becoming the
+    // script's own args -- same contract as embed_main.zig's build-time
+    // equivalent (A1). Runs on every startup, so it must stay cheap; see
+    // `tryReadEmbeddedPayload`'s doc comment.
+    if (try zrun.payload.tryReadEmbeddedPayload(io, gpa)) |source| {
+        defer gpa.free(source);
+        var payload_args_it = std.process.Args.Iterator.init(init.minimal.args);
+        _ = payload_args_it.skip(); // argv[0]
+        var script_args: std.ArrayList([]const u8) = .empty;
+        while (payload_args_it.next()) |a| try script_args.append(arena, a);
+
+        var interp = try zinterpreter.Interpreter.init(gpa, stdout);
+        interp.console_error_writer = stderr;
+        defer interp.deinit();
+        try zrun.install(&interp, io, script_args.items);
+        try zrun.installYaml(&interp);
+        try zrun.installToml(&interp);
+        try zrun.installCrypto(&interp, io);
+        try zrun.installArgsParser(&interp);
+
+        _ = interp.run(source) catch |err| {
+            try stdout.flush();
+            switch (err) {
+                error.UncaughtException => try zrun.printUncaught(stderr, interp.pending_exception.?),
+                error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
+                else => try stderr.print("SyntaxError: {t}\n", .{err}),
+            }
+            try stderr.flush();
+            return 1;
+        };
+
+        try stdout.flush();
+        try stderr.flush();
+        return 0;
+    }
+
+    // `z-run compile <script.js> -o <output> [-f]`: reserved first-token
+    // subcommand, dispatched before the normal flat `parseArgs` below.
+    // A script literally named `compile` needs `z-run ./compile` or
+    // `z-run -- compile` (documented narrowing, see
+    // `~/.plans/z-run-compile-a2.md`).
+    {
+        var peek_it = std.process.Args.Iterator.init(init.minimal.args);
+        _ = peek_it.skip(); // argv[0]
+        if (peek_it.next()) |first| {
+            if (std.mem.eql(u8, first, "compile")) {
+                var rest: std.ArrayList([:0]const u8) = .empty;
+                while (peek_it.next()) |a| try rest.append(arena, a);
+                return zrun.compile_cmd.run(gpa, io, stdout, stderr, rest.items);
+            }
+        }
+    }
+
     const args = try parseArgs(arena, init) orelse {
         try stderr.writeAll(usage_text);
         try stderr.flush();
         return 1;
     };
-
-    var stdout_buf: [4096]u8 = undefined;
-    var stdout_writer = std.Io.File.stdout().writer(io, &stdout_buf);
-    const stdout = &stdout_writer.interface;
 
     switch (args.mode) {
         .help => {

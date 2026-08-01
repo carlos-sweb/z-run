@@ -6,6 +6,8 @@ const yaml_globals = @import("yaml_globals.zig");
 const toml_globals = @import("toml_globals.zig");
 const crypto_globals = @import("crypto_globals.zig");
 const args_globals = @import("args_globals.zig");
+pub const payload = @import("payload.zig");
+pub const compile_cmd = @import("compile_cmd.zig");
 
 pub const install = os_globals.install;
 pub const RunCtx = os_globals.RunCtx;

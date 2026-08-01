@@ -47,6 +47,7 @@ z-run -e "console.log('hi')"        # eval without printing (Node's -e behavior)
 z-run -v                             # print the version
 z-run -h                             # usage/help
 z-run script.js -- --foo             # `--` ends flag parsing; --foo lands in os.args
+z-run compile script.js -o app       # bake script.js into a standalone binary -- see "Standalone binaries" below
 ```
 
 The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 218-test suite covers.
@@ -257,7 +258,9 @@ unknownOption undefined bogus undefined
 
 ## Standalone binaries
 
-Bake a script into a self-contained executable (engine + script, no external `.js` needed at runtime) — `deno compile`-style, done at build time with `@embedFile`:
+Two ways to bake a script into a self-contained executable (engine + script, no external `.js` needed at runtime) — `deno compile`-style. Both produce a binary with the same scope and the same runtime behavior; they differ only in *how* the script gets attached.
+
+### Build-time: `-Dscript` (needs the Zig toolchain + this source tree)
 
 ```bash
 zig build install -Dscript=myfile.js -Dname=app -Doptimize=ReleaseSafe
@@ -268,9 +271,25 @@ zig build install -Dscript=myfile.js -Dname=app -Doptimize=ReleaseSafe
 - `-Dname=<name>` — output binary name (default `app`).
 - Cross-compile like any Zig build: add `-Dtarget=aarch64-linux`, etc.
 
+### `z-run compile`: no toolchain needed (works from an already-built `z-run`)
+
+```bash
+z-run compile myfile.js -o app
+./app foo bar                    # runs the baked-in script; foo/bar -> os.args
+```
+
+Copies the currently-running `z-run` binary and appends the script plus a small footer (magic + length) — no `zig build` involved, so it works anywhere a plain `z-run` binary already sits (a CI image, a downloaded release, etc.), not just inside this source tree.
+
+- `-o, --output <path>` — output binary path (required).
+- `-f, --force` — overwrite `<path>` if it already exists (the default is to fail rather than silently overwrite).
+- No cross-compile: the produced binary is for the same target/arch as the `z-run` that ran `compile`. Use `-Dscript` (above) to cross-compile.
+- A binary produced by `compile` can't itself run `compile` again — once a binary carries a baked-in script, every invocation runs that script (that's the whole point); only a plain, unpainted `z-run` can compile. Chaining "compile from a binary I already compiled" isn't supported.
+
+### Common to both
+
 The binary is fully self-contained (Zig links statically) and still *interprets* at startup — it packages the interpreter, it doesn't compile the JS to machine code. Exit codes and error reporting match the CLI (`Uncaught …` on stderr, exit 1).
 
-**Scope:** single-file scripts, run as a script (the engine is always-strict). `import`/`export` are **not** resolved in an embedded binary — bundle the module graph first, or use the plain `z-run <file>` CLI (which does resolve relative imports). A no-toolchain bundler (`z-run compile` appending the script to the executable) is a possible future addition.
+**Scope:** single-file scripts, run as a script (the engine is always-strict). `import`/`export` are **not** resolved in a baked-in binary — bundle the module graph first, or use the plain `z-run <file>` CLI (which does resolve relative imports).
 
 ## License
 
