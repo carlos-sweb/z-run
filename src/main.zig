@@ -32,71 +32,6 @@ const usage_text =
     \\
 ;
 
-const Args = struct {
-    mode: enum { run_file, eval, repl, help, version },
-    eval_code: ?[]const u8 = null,
-    print_result: bool = false,
-    script_path: ?[]const u8 = null,
-    script_args: [][]const u8,
-};
-
-fn parseArgs(arena: std.mem.Allocator, init: std.process.Init) !?Args {
-    var args_it = std.process.Args.Iterator.init(init.minimal.args);
-    _ = args_it.skip(); // argv[0]
-
-    var eval_code: ?[]const u8 = null;
-    var print_result = false;
-    var script_path: ?[]const u8 = null;
-    var positional_only = false;
-    var script_args: std.ArrayList([]const u8) = .empty;
-
-    while (args_it.next()) |a| {
-        if (!positional_only and std.mem.eql(u8, a, "--")) {
-            positional_only = true;
-            continue;
-        }
-        if (!positional_only and (std.mem.eql(u8, a, "-h") or std.mem.eql(u8, a, "--help"))) {
-            return .{ .mode = .help, .script_args = &.{} };
-        }
-        if (!positional_only and (std.mem.eql(u8, a, "-v") or std.mem.eql(u8, a, "--version"))) {
-            return .{ .mode = .version, .script_args = &.{} };
-        }
-        if (!positional_only and (std.mem.eql(u8, a, "-e") or std.mem.eql(u8, a, "--eval"))) {
-            eval_code = args_it.next() orelse {
-                return null; // missing argument to -e
-            };
-            continue;
-        }
-        if (!positional_only and (std.mem.eql(u8, a, "-p") or std.mem.eql(u8, a, "--print"))) {
-            print_result = true;
-            continue;
-        }
-        if (!positional_only and a.len > 1 and a[0] == '-') {
-            return null; // unknown flag
-        }
-        if (eval_code == null and script_path == null) {
-            script_path = a;
-        } else {
-            try script_args.append(arena, a);
-        }
-    }
-
-    const mode: @FieldType(Args, "mode") = if (eval_code != null)
-        .eval
-    else if (script_path != null)
-        .run_file
-    else
-        .repl;
-
-    return .{
-        .mode = mode,
-        .eval_code = eval_code,
-        .print_result = print_result,
-        .script_path = script_path,
-        .script_args = script_args.items,
-    };
-}
-
 pub fn main(init: std.process.Init) !u8 {
     const io = init.io;
     const gpa = init.gpa;
@@ -149,9 +84,9 @@ pub fn main(init: std.process.Init) !u8 {
     }
 
     // `z-run compile <script.js> -o <output> [-f]`: reserved first-token
-    // subcommand, dispatched before the normal flat `parseArgs` below.
-    // A script literally named `compile` needs `z-run ./compile` or
-    // `z-run -- compile` (documented narrowing, see
+    // subcommand, dispatched before the normal flat CLI (`zrun.cli_args
+    // .parse`) below. A script literally named `compile` needs
+    // `z-run ./compile` or `z-run -- compile` (documented narrowing, see
     // `~/.plans/z-run-compile-a2.md`).
     {
         var peek_it = std.process.Args.Iterator.init(init.minimal.args);
@@ -165,7 +100,12 @@ pub fn main(init: std.process.Init) !u8 {
         }
     }
 
-    const args = try parseArgs(arena, init) orelse {
+    var argv_it = std.process.Args.Iterator.init(init.minimal.args);
+    _ = argv_it.skip(); // argv[0]
+    var argv_rest: std.ArrayList([:0]const u8) = .empty;
+    while (argv_it.next()) |a| try argv_rest.append(arena, a);
+
+    const args = try zrun.cli_args.parse(arena, argv_rest.items) orelse {
         try stderr.writeAll(usage_text);
         try stderr.flush();
         return 1;

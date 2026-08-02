@@ -132,6 +132,7 @@ pub fn build(b: *std.Build) void {
         "tests/args_test.zig",
         "tests/payload_test.zig",
         "tests/compile_cmd_test.zig",
+        "tests/cli_args_test.zig",
     };
 
     inline for (test_files) |test_file| {
