@@ -40,7 +40,7 @@ pub fn run(interp: *Interpreter, io: std.Io, stdout: *std.Io.Writer, stderr: *st
         const result = interp.run(line) catch |err| {
             try stdout.flush();
             switch (err) {
-                error.UncaughtException => try zrun.printUncaught(stderr, interp.pending_exception.?),
+                error.UncaughtException => try zrun.printUncaught(interp.arena_state.allocator(), stderr, interp.pending_exception.?),
                 error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
                 else => try stderr.print("SyntaxError: {t}\n", .{err}),
             }

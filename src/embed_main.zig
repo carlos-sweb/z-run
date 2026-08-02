@@ -6,7 +6,6 @@
 //! engine is always-strict); `import`/`export` are not resolved.
 const std = @import("std");
 const zinterpreter = @import("zinterpreter");
-const zvalue = @import("zvalue");
 const zrun = @import("zrun");
 
 /// The JS source baked into this binary. `build.zig` maps the anonymous
@@ -44,15 +43,7 @@ pub fn main(init: std.process.Init) !u8 {
     _ = interp.run(embedded_source) catch |err| {
         try stdout.flush();
         switch (err) {
-            error.UncaughtException => {
-                const ex = interp.pending_exception.?;
-                switch (ex) {
-                    .@"error" => |box| try stderr.print("Uncaught {s}: {s}\n", .{ box.value.kind.name(), box.value.message }),
-                    .string => |box| try stderr.print("Uncaught '{s}'\n", .{box.value.data}),
-                    .number => |n| try stderr.print("Uncaught {d}\n", .{n}),
-                    else => try stderr.print("Uncaught [{s}]\n", .{ex.typeOf()}),
-                }
-            },
+            error.UncaughtException => try zrun.printUncaught(arena, stderr, interp.pending_exception.?),
             error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
             else => try stderr.print("SyntaxError: {t}\n", .{err}),
         }

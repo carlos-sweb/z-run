@@ -36,12 +36,21 @@ pub const version = "0.1.0";
 /// Formats an uncaught top-level exception the same way in every entry
 /// point (script file, `-e`, REPL) so error output never drifts between
 /// them.
-pub fn printUncaught(stderr: *std.Io.Writer, ex: zvalue.JSValue) !void {
+pub fn printUncaught(allocator: std.mem.Allocator, stderr: *std.Io.Writer, ex: zvalue.JSValue) !void {
     switch (ex) {
         .@"error" => |box| try stderr.print("Uncaught {s}: {s}\n", .{ box.value.kind.name(), box.value.message }),
         .string => |box| try stderr.print("Uncaught '{s}'\n", .{box.value.data}),
         .number => |n| try stderr.print("Uncaught {d}\n", .{n}),
-        else => try stderr.print("Uncaught [{s}]\n", .{ex.typeOf()}),
+        else => {
+            var buf: std.ArrayList(u8) = .empty;
+            defer buf.deinit(allocator);
+            const zinterpreter = @import("zinterpreter");
+            zinterpreter.inspect.inspect(allocator, &buf, ex) catch {
+                try stderr.print("Uncaught [{s}]\n", .{ex.typeOf()});
+                return;
+            };
+            try stderr.print("Uncaught {s}\n", .{buf.items});
+        },
     }
 }
 

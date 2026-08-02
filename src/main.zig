@@ -70,7 +70,7 @@ pub fn main(init: std.process.Init) !u8 {
         _ = interp.run(source) catch |err| {
             try stdout.flush();
             switch (err) {
-                error.UncaughtException => try zrun.printUncaught(stderr, interp.pending_exception.?),
+                error.UncaughtException => try zrun.printUncaught(interp.arena_state.allocator(), stderr, interp.pending_exception.?),
                 error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
                 else => try stderr.print("SyntaxError: {t}\n", .{err}),
             }
@@ -152,7 +152,7 @@ pub fn main(init: std.process.Init) !u8 {
                 // in order, before the error report.
                 try stdout.flush();
                 switch (err) {
-                    error.UncaughtException => try zrun.printUncaught(stderr, interp.pending_exception.?),
+                    error.UncaughtException => try zrun.printUncaught(interp.arena_state.allocator(), stderr, interp.pending_exception.?),
                     error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
                     else => try stderr.print("SyntaxError: {t}\n", .{err}),
                 }
@@ -177,7 +177,7 @@ pub fn main(init: std.process.Init) !u8 {
             const result = interp.run(args.eval_code.?) catch |err| {
                 try stdout.flush();
                 switch (err) {
-                    error.UncaughtException => try zrun.printUncaught(stderr, interp.pending_exception.?),
+                    error.UncaughtException => try zrun.printUncaught(interp.arena_state.allocator(), stderr, interp.pending_exception.?),
                     error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
                     else => try stderr.print("SyntaxError: {t}\n", .{err}),
                 }
