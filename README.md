@@ -269,7 +269,7 @@ zig build install -Dscript=myfile.js -Dname=app -Doptimize=ReleaseSafe
 
 - `-Dscript=<path>` — the script to embed (relative to the build root, or absolute). Its presence builds an extra executable alongside the normal `z-run`.
 - `-Dname=<name>` — output binary name (default `app`).
-- Cross-compile like any Zig build: add `-Dtarget=aarch64-linux`, etc.
+- Cross-compile like any Zig build: add `-Dtarget=aarch64-linux`, etc. musl libc targets (`-Dtarget=x86_64-linux-musl`, e.g. for Alpine) are verified: the result is a fully static ELF binary (no libc dependency at runtime at all), confirmed bit-for-bit test262-identical to the glibc build.
 
 ### `z-run compile`: no toolchain needed (works from an already-built `z-run`)
 
@@ -282,7 +282,7 @@ Copies the currently-running `z-run` binary and appends the script plus a small 
 
 - `-o, --output <path>` — output binary path (required).
 - `-f, --force` — overwrite `<path>` if it already exists (the default is to fail rather than silently overwrite).
-- No cross-compile: the produced binary is for the same target/arch as the `z-run` that ran `compile`. Use `-Dscript` (above) to cross-compile.
+- No cross-compile: the produced binary is for the same target/arch as the `z-run` that ran `compile`. Use `-Dscript` (above) to cross-compile. This does include libc, though: run `compile` from a musl-built `z-run` (see the `-Dtarget=x86_64-linux-musl` note above) and the output is just as statically self-contained — no glibc *or* musl install required to run it anywhere on that architecture.
 - A binary produced by `compile` can't itself run `compile` again — once a binary carries a baked-in script, every invocation runs that script (that's the whole point); only a plain, unpainted `z-run` can compile. Chaining "compile from a binary I already compiled" isn't supported.
 
 ### Common to both
