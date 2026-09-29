@@ -179,7 +179,9 @@ fn uuidV7(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []co
     _ = args;
     const rc = runCtx(ctx);
     const source: std.Random.IoSource = .{ .io = rc.io };
-    const id = zuuid.Uuid.v7(source.interface(), rc.io);
+    const id = zuuid.Uuid.v7(source.interface(), rc.io) catch |err| {
+        return rc.interp.throwError(.generic, "UUID v7 generation failed: {t}", .{err});
+    };
     var buf: [36]u8 = undefined;
     return rc.interp.gcNewString(id.toString(&buf));
 }
@@ -238,7 +240,9 @@ fn makeHashFn(comptime alg: zcrypto.hash.Algorithm) NativeFn {
             const data = try coerceBytes(rc, arg(args, 0), "data");
             const len = comptime zcrypto.hash.digestLength(alg);
             var digest_buf: [len]u8 = undefined;
-            zcrypto.hash.hash(alg, data, &digest_buf);
+            zcrypto.hash.hash(alg, data, &digest_buf) catch |err| {
+                return rc.interp.throwError(.generic, "hashing failed: {t}", .{err});
+            };
             return bytesToUint8Array(rc, &digest_buf);
         }
     }.call;
@@ -356,7 +360,9 @@ fn totpHotp(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []
     const digits = try requireDigits(rc, arg(args, 2));
 
     var buf: [9]u8 = undefined;
-    const code = zcrypto.totp.hotp(secret, counter, digits, &buf);
+    const code = zcrypto.totp.hotp(secret, counter, digits, &buf) catch |err| {
+        return rc.interp.throwError(.range_error, "HOTP generation failed: {t}", .{err});
+    };
     return rc.interp.gcNewString(code);
 }
 
@@ -370,7 +376,9 @@ fn totpTotp(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []
     const digits = try requireDigits(rc, arg(args, 3));
 
     var buf: [9]u8 = undefined;
-    const code = zcrypto.totp.totp(secret, unix_time, step, digits, &buf);
+    const code = zcrypto.totp.totp(secret, unix_time, step, digits, &buf) catch |err| {
+        return rc.interp.throwError(.range_error, "TOTP generation failed: {t}", .{err});
+    };
     return rc.interp.gcNewString(code);
 }
 
@@ -383,7 +391,9 @@ fn totpTotpNow(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args:
     const digits = try requireDigits(rc, arg(args, 2));
 
     var buf: [9]u8 = undefined;
-    const code = zcrypto.totp.totpNow(secret, rc.io, step, digits, &buf);
+    const code = zcrypto.totp.totpNow(secret, rc.io, step, digits, &buf) catch |err| {
+        return rc.interp.throwError(.range_error, "TOTP generation failed: {t}", .{err});
+    };
     return rc.interp.gcNewString(code);
 }
 
@@ -398,7 +408,9 @@ fn totpVerify(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: 
     const digits = try requireDigits(rc, arg(args, 4));
     const window = try requireUnsignedInt(rc, arg(args, 5), "window", u32);
 
-    const ok = zcrypto.totp.verifyTotp(secret, code, unix_time, step, digits, window);
+    const ok = zcrypto.totp.verifyTotp(secret, code, unix_time, step, digits, window) catch |err| {
+        return rc.interp.throwError(.range_error, "TOTP verification failed: {t}", .{err});
+    };
     return JSValue.fromBool(ok);
 }
 
