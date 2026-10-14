@@ -29,7 +29,6 @@
             .url = "https://github.com/carlos-sweb/z-toml/archive/refs/tags/v0.1.0.tar.gz",
             .hash = "ztoml-0.1.0-uwXZ6FDfAADB3fafdd0cVN1R2Lz99QANfurNOiCKtR9x",
         },
-        // z-uuid has a Zig 0.17-compatible tag, but no published GitHub release yet.
         .zuuid = .{
             .url = "https://github.com/carlos-sweb/z-uuid/archive/refs/tags/1.0.0.tar.gz",
             .hash = "zuuid-1.0.0-Gt-LksFfAQDkSlihSQvElXU8OlCvcY8rYmTo6BHbIZMW",

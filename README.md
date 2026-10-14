@@ -38,8 +38,7 @@ Requires **Zig 0.17.0** (`mise install` uses the included toolchain pin).
 Dependencies are downloaded automatically from pinned GitHub releases with
 verified package hashes; sibling checkouts are not required. `z-interpreter`,
 `z-value`, `z-yaml`, `z-toml`, `z-crypto`, and `z-args` use release `v0.1.0`.
-The exception is `z-uuid`: it supports Zig 0.17, but has no published GitHub
-release, so it is pinned to tag `1.0.0` until a release is available.
+`z-uuid` uses release `1.0.0`, also compatible with Zig 0.17.
 
 ```bash
 zig build install          # produces zig-out/bin/z-run
