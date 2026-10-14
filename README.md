@@ -80,6 +80,35 @@ Known regression:
   timeout, not an ECMA-262 certification. Of the timeouts, 103 passed in
   isolated 60-second rechecks. Both crashes also reproduced with v0.1.0.
 
+
+## Test262 baseline — 2026-10-14
+
+Current baseline: **z-interpreter v0.2.0**, Zig **0.17.0**, ReleaseFast.
+These are the raw full-sweep results from `results.jsonl`, before serial
+rechecks; recovered timeouts are not substituted into the baseline.
+
+| Result | Count |
+|---|---:|
+| PASS | 31,726 |
+| FAIL | 13,803 |
+| TIMEOUT | 108 |
+| CRASH | 2 |
+| SKIP | 1,742 |
+| **Total** | **47,381** |
+
+Known PASS-to-FAIL outcome:
+`test/built-ins/RegExp/named-groups/lookbehind.js`. z-regex v0.9.1 does not
+support lookbehind with captures under `u`; the interpreter now propagates
+that flag and reports the unsupported pattern as `SyntaxError`.
+
+Measurement: `/home/sweb/z-test262/runner.py`, scope `test/language test/built-ins`, 8 workers, 5-second timeout and a 2 GiB per-process limit.
+Test262 checkout: `9e61c12835c5e4a3bdba93850427e6742c4f64c4`.
+The runner has no separately selectable UTF-16/WTF-8 modes. Its historical
+host limitations still apply; these figures are not ECMA-262 certification.
+
+Source artifacts from this run:
+`/tmp/zrun-v020-test262-20261014/{results.jsonl,report.md,transitions.md,rechecks.jsonl}`.
+
 ## Examples
 
 **REPL** — a persistent session; bindings from one line are visible on the next (same `Interpreter`, its `script_env` is created once and reused), and a thrown exception doesn't end the session:
