@@ -36,8 +36,9 @@ Per the project's async/runtime design (agreed 2026-07-18):
 
 Requires **Zig 0.17.0** (`mise install` uses the included toolchain pin).
 Dependencies are downloaded automatically from pinned GitHub releases with
-verified package hashes; sibling checkouts are not required. `z-interpreter`,
-`z-value`, `z-yaml`, `z-toml`, `z-crypto`, and `z-args` use release `v0.1.0`.
+verified package hashes; sibling checkouts are not required. `z-interpreter`
+uses release `v0.2.0`; `z-value`, `z-yaml`, `z-toml`, `z-crypto`, and `z-args`
+use release `v0.1.0`.
 `z-uuid` uses release `1.0.0`, also compatible with Zig 0.17.
 
 ```bash
@@ -56,7 +57,28 @@ z-run script.js -- --foo             # `--` ends flag parsing; --foo lands in os
 z-run compile script.js -o app       # bake script.js into a standalone binary -- see "Standalone binaries" below
 ```
 
-The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 218-test suite covers.
+The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 661-test suite covers.
+
+## Release notes
+
+### v0.1.1
+
+- Bump z-interpreter to v0.2.0 (Zig 0.17, includes the Claude corrections:
+  ownership, GC, yield/await, prototypes, wrappers).
+
+Known regression:
+
+- Test262: `test/built-ins/RegExp/named-groups/lookbehind.js` now fails with
+  `SyntaxError`. Cause: v0.2.0 correctly passes the `u` flag to z-regex;
+  z-regex v0.9.1 declares `/(?<=(?<a>\w){3})f/u` as `UnsupportedFeature`.
+  Previously it passed only because the `u` flag was not propagated. This
+  exposes a z-regex limitation; forwarding the flag is a correctness fix,
+  while this test remains a reproducible PASS-to-FAIL outcome.
+- Full Test262: **31,726 PASS / 13,803 FAIL / 108 TIMEOUT / 2 CRASH /
+  1,742 SKIP**, an improvement over v0.1.0 (**29,856 PASS**). These are the
+  historical runner's 47,381-case results with 8 workers and a 5-second
+  timeout, not an ECMA-262 certification. Of the timeouts, 103 passed in
+  isolated 60-second rechecks. Both crashes also reproduced with v0.1.0.
 
 ## Examples
 

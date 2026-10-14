@@ -31,7 +31,7 @@ pub const installArgsParser = args_globals.install;
 
 /// Keep in sync with build.zig.zon's `.version` by hand -- no build-time
 /// plumbing for a single string.
-pub const version = "0.1.0";
+pub const version = "0.1.1";
 
 /// Formats an uncaught top-level exception the same way in every entry
 /// point (script file, `-e`, REPL) so error output never drifts between
