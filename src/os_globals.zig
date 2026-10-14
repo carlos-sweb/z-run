@@ -101,7 +101,7 @@ fn osExit(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []co
     _ = ctx;
     const code: u8 = switch (arg(args, 0)) {
         .number => |n| if (n >= 0 and n <= 255) @intFromFloat(n) else 1,
-        .@"undefined" => 0,
+        .undefined => 0,
         else => 1,
     };
     std.process.exit(code);

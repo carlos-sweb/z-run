@@ -1,6 +1,6 @@
 # Z-Run
 
-[![Zig Version](https://img.shields.io/badge/zig-0.16-orange.svg)](https://ziglang.org/)
+[![Zig Version](https://img.shields.io/badge/zig-0.17-orange.svg)](https://ziglang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A **minimal script runtime** for the [z-*](https://github.com/carlos-sweb) ECMAScript engine — the first repo that makes the engine usable *outside* its own test suites. Runs a script file with real stdout, script arguments, and synchronous file I/O:
@@ -33,6 +33,13 @@ Per the project's async/runtime design (agreed 2026-07-18):
 - **Windows** — POSIX only, like the rest of the ecosystem.
 
 ## Usage
+
+Requires **Zig 0.17.0** (`mise install` uses the included toolchain pin).
+Dependencies are downloaded automatically from pinned GitHub releases with
+verified package hashes; sibling checkouts are not required. `z-interpreter`,
+`z-value`, `z-yaml`, `z-toml`, `z-crypto`, and `z-args` use release `v0.1.0`.
+The exception is `z-uuid`: it supports Zig 0.17, but has no published GitHub
+release, so it is pinned to tag `1.0.0` until a release is available.
 
 ```bash
 zig build install          # produces zig-out/bin/z-run

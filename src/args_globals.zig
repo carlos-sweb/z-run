@@ -94,7 +94,7 @@ fn coerceArgv(interp: *Interpreter, allocator: Allocator, argv_val: JSValue) any
     }
     for (items, 0..) |item, i| {
         if (item != .string) return interp.throwError(.type_error, "argv must contain only strings", .{});
-        out[i] = try allocator.dupeZ(u8, item.string.value.data);
+        out[i] = try allocator.dupeSentinel(u8, item.string.value.data, 0);
         filled = i + 1;
     }
     return out;
