@@ -42,11 +42,7 @@ pub fn main(init: std.process.Init) !u8 {
 
     _ = interp.run(embedded_source) catch |err| {
         try stdout.flush();
-        switch (err) {
-            error.UncaughtException => try zrun.printUncaught(arena, stderr, interp.pending_exception.?),
-            error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
-            else => try stderr.print("SyntaxError: {t}\n", .{err}),
-        }
+        try zrun.printFailure(arena, stderr, err, interp.pending_exception);
         try stderr.flush();
         return 1;
     };

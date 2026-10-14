@@ -50,6 +50,8 @@ pub fn build(b: *std.Build) void {
     });
     zrun_module.addImport("zinterpreter", zinterpreter_module);
     zrun_module.addImport("zvalue", zvalue_module);
+    // Reuse the engine's parser error set for CLI diagnostics.
+    zrun_module.addImport("zfunctions", zinterpreter_module.import_table.get("zfunctions").?);
     zrun_module.addImport("build_options", build_options_module);
 
     // zargs is a mandatory import of zrun_module now (unlike the
@@ -133,6 +135,7 @@ pub fn build(b: *std.Build) void {
         "tests/payload_test.zig",
         "tests/compile_cmd_test.zig",
         "tests/cli_args_test.zig",
+        "tests/diagnostics_test.zig",
     };
 
     inline for (test_files) |test_file| {

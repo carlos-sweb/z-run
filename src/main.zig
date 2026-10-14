@@ -69,11 +69,7 @@ pub fn main(init: std.process.Init) !u8 {
 
         _ = interp.run(source) catch |err| {
             try stdout.flush();
-            switch (err) {
-                error.UncaughtException => try zrun.printUncaught(interp.arena_state.allocator(), stderr, interp.pending_exception.?),
-                error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
-                else => try stderr.print("SyntaxError: {t}\n", .{err}),
-            }
+            try zrun.printFailure(interp.arena_state.allocator(), stderr, err, interp.pending_exception);
             try stderr.flush();
             return 1;
         };
@@ -151,11 +147,7 @@ pub fn main(init: std.process.Init) !u8 {
                 // console output emitted before the failure must still land,
                 // in order, before the error report.
                 try stdout.flush();
-                switch (err) {
-                    error.UncaughtException => try zrun.printUncaught(interp.arena_state.allocator(), stderr, interp.pending_exception.?),
-                    error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
-                    else => try stderr.print("SyntaxError: {t}\n", .{err}),
-                }
+                try zrun.printFailure(interp.arena_state.allocator(), stderr, err, interp.pending_exception);
                 try stderr.flush();
                 return 1;
             };
@@ -176,11 +168,7 @@ pub fn main(init: std.process.Init) !u8 {
 
             const result = interp.run(args.eval_code.?) catch |err| {
                 try stdout.flush();
-                switch (err) {
-                    error.UncaughtException => try zrun.printUncaught(interp.arena_state.allocator(), stderr, interp.pending_exception.?),
-                    error.NotImplemented => try stderr.writeAll("z-run: NotImplemented: the script uses a feature this engine doesn't support yet\n"),
-                    else => try stderr.print("SyntaxError: {t}\n", .{err}),
-                }
+                try zrun.printFailure(interp.arena_state.allocator(), stderr, err, interp.pending_exception);
                 try stderr.flush();
                 return 1;
             };

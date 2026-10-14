@@ -33,6 +33,29 @@ pub const installArgsParser = args_globals.install;
 /// plumbing for a single string.
 pub const version = "0.1.1";
 
+/// Report a pending JS exception when present; otherwise classify the Zig
+/// failure without turning resource or engine failures into SyntaxError.
+pub fn printFailure(allocator: std.mem.Allocator, stderr: *std.Io.Writer, err: anyerror, pending_exception: ?zvalue.JSValue) !void {
+    if (pending_exception) |ex| return printUncaught(allocator, stderr, ex);
+    try stderr.print("{s}: {s}\n", .{ failureLabel(err), @errorName(err) });
+}
+
+fn failureLabel(err: anyerror) []const u8 {
+    switch (err) {
+        error.SyntaxError, error.ParseError => return "SyntaxError",
+        error.OutOfMemory => return "Out of memory",
+        error.IoError => return "I/O error",
+        error.StepLimitExceeded => return "Execution step limit exceeded",
+        error.UnsupportedFeature, error.NotImplemented => return "Unsupported feature",
+        else => {},
+    }
+    // ParseError includes allocator failures: classify those above first.
+    inline for (@typeInfo(@import("zfunctions").ParseError).error_set.error_names.?) |name| {
+        if (std.mem.eql(u8, @errorName(err), name)) return "SyntaxError";
+    }
+    return "Engine error";
+}
+
 /// Formats an uncaught top-level exception the same way in every entry
 /// point (script file, `-e`, REPL) so error output never drifts between
 /// them.
