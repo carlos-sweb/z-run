@@ -1,6 +1,6 @@
 .{
     .name = .zrun,
-    .version = "0.1.1",
+    .version = "0.1.2",
     .minimum_zig_version = "0.17.0",
     .fingerprint = 0x8af1e23654497736,
     .description = "Minimal script runtime (CLI + synchronous fs bindings) for the z-* ECMAScript engine",
@@ -14,8 +14,8 @@
     },
     .dependencies = .{
         .zinterpreter = .{
-            .url = "https://github.com/carlos-sweb/z-interpreter/archive/refs/tags/v0.2.0.tar.gz",
-            .hash = "zinterpreter-0.2.0-xWdFazx_FQBCFrk1h1hUDo5b0HQPGyluOR_19dDndpWm",
+            .url = "https://github.com/carlos-sweb/z-interpreter/archive/refs/tags/v0.2.1.tar.gz",
+            .hash = "zinterpreter-0.2.1-xWdFa7qEFQClcLQhdKBJjKO5FSUQbvsIcNRoRNEqoZ2G",
         },
         .zvalue = .{
             .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.0.tar.gz",

@@ -37,7 +37,7 @@ Per the project's async/runtime design (agreed 2026-07-18):
 Requires **Zig 0.17.0** (`mise install` uses the included toolchain pin).
 Dependencies are downloaded automatically from pinned GitHub releases with
 verified package hashes; sibling checkouts are not required. `z-interpreter`
-uses release `v0.2.0`; `z-value`, `z-yaml`, `z-toml`, `z-crypto`, and `z-args`
+uses release `v0.2.1` with z-temporal `v0.2.0`; `z-value`, `z-yaml`, `z-toml`, `z-crypto`, and `z-args`
 use release `v0.1.0`.
 `z-uuid` uses release `1.0.0`, also compatible with Zig 0.17.
 
@@ -57,9 +57,17 @@ z-run script.js -- --foo             # `--` ends flag parsing; --foo lands in os
 z-run compile script.js -o app       # bake script.js into a standalone binary -- see "Standalone binaries" below
 ```
 
-The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 661-test suite covers.
+The whole engine is available to scripts: classes, destructuring, getters/setters, closures, exceptions, `JSON`, `Math`, `Date`, hoisting/TDZ — everything z-interpreter's 663-test suite covers.
 
 ## Release notes
+
+### v0.1.2
+
+- Update z-interpreter to v0.2.1, incorporating z-temporal v0.2.0.
+- Fix four PlainTime calendar-annotation and three Instant rounding-increment
+  Test262 failures through the updated dependency.
+- The full Test262 baseline below remains the recorded v0.2.0 interpreter sweep;
+  it has not been replaced by a new full-suite measurement.
 
 ### v0.1.1
 

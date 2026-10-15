@@ -31,7 +31,7 @@ pub const installArgsParser = args_globals.install;
 
 /// Keep in sync with build.zig.zon's `.version` by hand -- no build-time
 /// plumbing for a single string.
-pub const version = "0.1.1";
+pub const version = "0.1.2";
 
 /// Report a pending JS exception when present; otherwise classify the Zig
 /// failure without turning resource or engine failures into SyntaxError.
