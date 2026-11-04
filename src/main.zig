@@ -23,6 +23,8 @@ const usage_text =
     \\  -p, --print         with -e, print the result of the evaluation
     \\  -v, --version       print the version and exit
     \\  -h, --help          print this help and exit
+    \\  --engine=<eng>      execution engine: tree (default) or bytecode
+    \\  --disasm            print bytecode disassembly before execution
     \\  --                  treat every following argument as positional
     \\
     \\with no script and no -e, starts a REPL.
@@ -130,6 +132,8 @@ pub fn main(init: std.process.Init) !u8 {
 
             var interp = try zinterpreter.Interpreter.init(gpa, stdout);
             interp.console_error_writer = stderr;
+            interp.compile_options.use_bytecode_vm = (args.engine == .bytecode);
+            interp.compile_options.disasm = args.disasm;
             defer interp.deinit();
             try zrun.install(&interp, io, args.script_args);
             try zrun.installYaml(&interp);
@@ -159,6 +163,8 @@ pub fn main(init: std.process.Init) !u8 {
         .eval => {
             var interp = try zinterpreter.Interpreter.init(gpa, stdout);
             interp.console_error_writer = stderr;
+            interp.compile_options.use_bytecode_vm = (args.engine == .bytecode);
+            interp.compile_options.disasm = args.disasm;
             defer interp.deinit();
             try zrun.install(&interp, io, args.script_args);
             try zrun.installYaml(&interp);
@@ -188,6 +194,8 @@ pub fn main(init: std.process.Init) !u8 {
         .repl => {
             var interp = try zinterpreter.Interpreter.init(gpa, stdout);
             interp.console_error_writer = stderr;
+            interp.compile_options.use_bytecode_vm = (args.engine == .bytecode);
+            interp.compile_options.disasm = args.disasm;
             defer interp.deinit();
             try zrun.install(&interp, io, args.script_args);
             try zrun.installYaml(&interp);

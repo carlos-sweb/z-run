@@ -21,10 +21,14 @@ const Allocator = std.mem.Allocator;
 const zargs = @import("zargs");
 const Simple = zargs.Simple;
 
+pub const Engine = enum { tree, bytecode };
+
 pub const Args = struct {
     mode: enum { run_file, eval, repl, help, version },
     eval_code: ?[]const u8 = null,
     print_result: bool = false,
+    engine: Engine = .tree,
+    disasm: bool = false,
     script_path: ?[]const u8 = null,
     script_args: [][]const u8,
 };
@@ -34,6 +38,8 @@ const specs = [_]Simple.OptionSpec{
     .{ .short = 'v', .long = "version", .kind = .flag },
     .{ .short = 'e', .long = "eval", .kind = .value },
     .{ .short = 'p', .long = "print", .kind = .flag },
+    .{ .short = null, .long = "engine", .kind = .value },
+    .{ .short = null, .long = "disasm", .kind = .flag },
 };
 
 /// `args` is argv WITHOUT the program name (`argv[0]` already skipped by
@@ -47,6 +53,8 @@ pub fn parse(arena: Allocator, args: []const [:0]const u8) !?Args {
 
     var eval_code: ?[]const u8 = null;
     var print_result = false;
+    var engine: Engine = .tree;
+    var disasm = false;
     var script_path: ?[]const u8 = null;
     var script_args: std.ArrayList([]const u8) = .empty;
 
@@ -58,9 +66,23 @@ pub fn parse(arena: Allocator, args: []const [:0]const u8) !?Args {
                 if (f.short == 'h') return .{ .mode = .help, .script_args = &.{} };
                 if (f.short == 'v') return .{ .mode = .version, .script_args = &.{} };
                 if (f.short == 'p') print_result = true;
+                if (f.long) |l| {
+                    if (std.mem.eql(u8, l, "disasm")) disasm = true;
+                }
             },
             .option => |o| {
                 if (o.short == 'e') eval_code = o.value;
+                if (o.long) |l| {
+                    if (std.mem.eql(u8, l, "engine")) {
+                        if (std.mem.eql(u8, o.value, "bytecode")) {
+                            engine = .bytecode;
+                        } else if (std.mem.eql(u8, o.value, "tree")) {
+                            engine = .tree;
+                        } else {
+                            return null;
+                        }
+                    }
+                }
             },
             .positional => |p| {
                 if (eval_code == null and script_path == null) {
@@ -84,6 +106,8 @@ pub fn parse(arena: Allocator, args: []const [:0]const u8) !?Args {
         .mode = mode,
         .eval_code = eval_code,
         .print_result = print_result,
+        .engine = engine,
+        .disasm = disasm,
         .script_path = script_path,
         .script_args = script_args.items,
     };
