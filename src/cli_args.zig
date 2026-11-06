@@ -27,7 +27,7 @@ pub const Args = struct {
     mode: enum { run_file, eval, repl, help, version },
     eval_code: ?[]const u8 = null,
     print_result: bool = false,
-    engine: Engine = .tree,
+    engine: Engine = .bytecode,
     disasm: bool = false,
     script_path: ?[]const u8 = null,
     script_args: [][]const u8,
@@ -53,7 +53,7 @@ pub fn parse(arena: Allocator, args: []const [:0]const u8) !?Args {
 
     var eval_code: ?[]const u8 = null;
     var print_result = false;
-    var engine: Engine = .tree;
+    var engine: Engine = .bytecode;
     var disasm = false;
     var script_path: ?[]const u8 = null;
     var script_args: std.ArrayList([]const u8) = .empty;

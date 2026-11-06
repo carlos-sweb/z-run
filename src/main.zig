@@ -23,7 +23,7 @@ const usage_text =
     \\  -p, --print         with -e, print the result of the evaluation
     \\  -v, --version       print the version and exit
     \\  -h, --help          print this help and exit
-    \\  --engine=<eng>      execution engine: tree (default) or bytecode
+    \\  --engine=<eng>      execution engine: bytecode (default) or tree
     \\  --disasm            print bytecode disassembly before execution
     \\  --                  treat every following argument as positional
     \\
