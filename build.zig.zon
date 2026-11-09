@@ -14,8 +14,8 @@
     },
     .dependencies = .{
         .zinterpreter = .{
-            .url = "https://github.com/carlos-sweb/z-interpreter/archive/819f35e10abbfd099401e3f3d1e96bd3667553d3.tar.gz",
-            .hash = "zinterpreter-0.2.1-xWdFa4PnGgCvb6puQLMBHDpEVMbUzA0T3l0uicSGy0hY",
+            .url = "https://github.com/carlos-sweb/z-interpreter/archive/ef02571b5178ebceead0edd174ab9d998aa5c066.tar.gz",
+            .hash = "zinterpreter-0.2.1-xWdFa7DiGgAXHvSnY2VKgqptp-b0VEASijt3-IRKz7D9",
         },
         .zvalue = .{
             .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.0.tar.gz",
