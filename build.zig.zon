@@ -14,12 +14,12 @@
     },
     .dependencies = .{
         .zinterpreter = .{
-            .url = "https://github.com/carlos-sweb/z-interpreter/archive/229a3b600fda27a4566ffaa0001c87996eac5ee8.tar.gz",
-            .hash = "zinterpreter-0.2.1-xWdFa4YUGwAEyAtqKgS14G8dIxo_6NfYqTGQzH8brTp4",
+            .url = "https://github.com/carlos-sweb/z-interpreter/archive/6b50a5133ae219c0ad37b0ca29236a001a77ce2a.tar.gz",
+            .hash = "zinterpreter-0.2.1-xWdFa0mQGwDykmVDowwPZF4kwPbfbkGWI_UrkOuh4reG",
         },
         .zvalue = .{
-            .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.0.tar.gz",
-            .hash = "zvalue-0.1.0-DI9AtcjRAQD7dtSrV5Y8hmAAMI7_C3iLOiT24htJbU9T",
+            .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.1.tar.gz",
+            .hash = "zvalue-0.1.0-DI9AtcjRAQAxuCj-xB6S5gMOcz0UTLsWRTx_YHENc7HW",
         },
         .zyaml = .{
             .url = "https://github.com/carlos-sweb/z-yaml/archive/refs/tags/v0.1.0.tar.gz",
