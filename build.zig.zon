@@ -22,12 +22,12 @@
             .hash = "zvalue-0.1.0-DI9AtcjRAQAxuCj-xB6S5gMOcz0UTLsWRTx_YHENc7HW",
         },
         .zyaml = .{
-            .url = "https://github.com/carlos-sweb/z-yaml/archive/refs/tags/v0.1.0.tar.gz",
-            .hash = "zyaml-0.1.0-XOM84gD0AAAwUan0bIGQR0j8HskFl5dP6Fz8FTi7fosh",
+            .url = "https://github.com/carlos-sweb/z-yaml/archive/refs/tags/v0.2.0.tar.gz",
+            .hash = "zyaml-0.1.0-XOM84nz0AAB1AMh4uaqC1zDnk8iFaQTHBGBHZWd5CDGX",
         },
         .ztoml = .{
-            .url = "https://github.com/carlos-sweb/z-toml/archive/refs/tags/v0.1.0.tar.gz",
-            .hash = "ztoml-0.1.0-uwXZ6FDfAADB3fafdd0cVN1R2Lz99QANfurNOiCKtR9x",
+            .url = "https://github.com/carlos-sweb/z-toml/archive/refs/tags/v0.2.0.tar.gz",
+            .hash = "ztoml-0.1.0-uwXZ6I7fAADrL3mVGXA07r5zwDeSCVK47xMRkxkhqpJp",
         },
         .zuuid = .{
             .url = "https://github.com/carlos-sweb/z-uuid/archive/refs/tags/1.0.0.tar.gz",
