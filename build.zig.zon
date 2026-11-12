@@ -14,20 +14,20 @@
     },
     .dependencies = .{
         .zinterpreter = .{
-            .url = "https://github.com/carlos-sweb/z-interpreter/archive/6b50a5133ae219c0ad37b0ca29236a001a77ce2a.tar.gz",
-            .hash = "zinterpreter-0.2.1-xWdFa0mQGwDykmVDowwPZF4kwPbfbkGWI_UrkOuh4reG",
+            .url = "https://github.com/carlos-sweb/z-interpreter/archive/ab1b501.tar.gz",
+            .hash = "zinterpreter-0.2.1-xWdFa3uQGwAeeZIEb4nEwTnwdi-1CVtHi-HRjGxqM5Ez",
         },
         .zvalue = .{
-            .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.1.tar.gz",
-            .hash = "zvalue-0.1.0-DI9AtcjRAQAxuCj-xB6S5gMOcz0UTLsWRTx_YHENc7HW",
+            .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.2.tar.gz",
+            .hash = "zvalue-0.1.0-DI9AtcjRAQAhgOh1b1N69XQFXLuRJ8TuzGkRqQTEDMtz",
         },
         .zyaml = .{
-            .url = "https://github.com/carlos-sweb/z-yaml/archive/refs/tags/v0.2.0.tar.gz",
-            .hash = "zyaml-0.1.0-XOM84nz0AAB1AMh4uaqC1zDnk8iFaQTHBGBHZWd5CDGX",
+            .url = "https://github.com/carlos-sweb/z-yaml/archive/refs/tags/v0.2.1.tar.gz",
+            .hash = "zyaml-0.1.0-XOM84nz0AADXhdvZNJu1rW_0MHNAQptCmL2jWYbeyGO4",
         },
         .ztoml = .{
-            .url = "https://github.com/carlos-sweb/z-toml/archive/refs/tags/v0.2.0.tar.gz",
-            .hash = "ztoml-0.1.0-uwXZ6I7fAADrL3mVGXA07r5zwDeSCVK47xMRkxkhqpJp",
+            .url = "https://github.com/carlos-sweb/z-toml/archive/refs/tags/v0.2.1.tar.gz",
+            .hash = "ztoml-0.1.0-uwXZ6I7fAAC1XSnZASroCvyTmNRwG6K1o2TS0VQP0rtm",
         },
         .zuuid = .{
             .url = "https://github.com/carlos-sweb/z-uuid/archive/refs/tags/1.0.0.tar.gz",
