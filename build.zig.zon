@@ -15,7 +15,7 @@
     .dependencies = .{
         .zinterpreter = .{
             .url = "https://github.com/carlos-sweb/z-interpreter/archive/refs/tags/v0.3.6.tar.gz",
-            .hash = "zinterpreter-0.2.1-xWdFa3l6HACcTMM7E8czvN8Hd4-ZJkd7TzOKgGufnz0J",
+            .hash = "zinterpreter-0.2.1-xWdFa0V8HAB6tqWwWEjsLl35tA6Ak9buAxo3-cQ0aO6Q",
         },
         .zvalue = .{
             .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.2.tar.gz",
