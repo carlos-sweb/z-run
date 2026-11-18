@@ -14,20 +14,20 @@
     },
     .dependencies = .{
         .zinterpreter = .{
-            .url = "https://github.com/carlos-sweb/z-interpreter/archive/refs/tags/v0.3.20.tar.gz",
-            .hash = "zinterpreter-0.2.1-xWdFa-9cHQCICjTqLtQj3INlfVUENRn2UIDmnNwbmi3Z",
+            .url = "git+https://github.com/carlos-sweb/z-interpreter?ref=v0.3.21#5e5d2275c19bddc8e20406a2ef5d8193a6e96eef",
+            .hash = "zinterpreter-0.2.1-xWdFayqqHQBJ5hmgfp48OEqi-poU5wn6QzVyh0wl6Kj0",
         },
         .zvalue = .{
-            .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.5.tar.gz",
-            .hash = "zvalue-0.1.0-DI9AtcjRAQAcm4B2G8gJ22u0Ts5M9u-fSw8i7LKH5ET_",
+            .url = "git+https://github.com/carlos-sweb/z-value?ref=v0.1.6#93e085be14472520fb9876326fc55bd14224d6b1",
+            .hash = "zvalue-0.1.0-DI9AteDRAQBa5KLH2gcljxJMHW5yXQ6gOC9NemQMpXOT",
         },
         .zyaml = .{
-            .url = "https://github.com/carlos-sweb/z-yaml/archive/refs/tags/v0.2.4.tar.gz",
-            .hash = "zyaml-0.1.0-XOM84nz0AAAhCwe7Lu20C5759yeFu55wkMrJ5yEiUKxt",
+            .url = "git+https://github.com/carlos-sweb/z-yaml?ref=v0.2.5#3fa0795726361979383c29010562aa87306e84cd",
+            .hash = "zyaml-0.1.0-XOM84pT0AABR_6GQ1-qlieEoThusG3VSWFxiNejQp3g4",
         },
         .ztoml = .{
-            .url = "https://github.com/carlos-sweb/z-toml/archive/refs/tags/v0.2.4.tar.gz",
-            .hash = "ztoml-0.1.0-uwXZ6I7fAADHeySk9JwZINodQLIeyV5hKhYlTKk6WVI9",
+            .url = "git+https://github.com/carlos-sweb/z-toml?ref=v0.2.5#f4a3b214df624128fdc2dcf0d6119eabde0a46eb",
+            .hash = "ztoml-0.1.0-uwXZ6KbfAAAMbjdfHE8MJk874hpweZ1NbsvyULNx7pwe",
         },
         .zuuid = .{
             .url = "https://github.com/carlos-sweb/z-uuid/archive/refs/tags/1.0.0.tar.gz",
@@ -40,6 +40,10 @@
         .zargs = .{
             .url = "https://github.com/carlos-sweb/z-args/archive/refs/tags/v0.1.0.tar.gz",
             .hash = "zargs-0.1.0-PvR7OLAkAQAl6DabyEwAdil8uPoqiDaMAq8arTsG0OBt",
+        },
+        .zjson = .{
+            .url = "git+https://github.com/carlos-sweb/z-json?ref=v0.1.6#ced62c530c78981757dd45fb3f807154e8f10d40",
+            .hash = "zjson-0.1.0-HTnR70G_AAAlf03CyWxbXrYt-9JebA37JJiDOr0VAzVb",
         },
     },
 }
