@@ -33,8 +33,8 @@ pub fn install(interp: *Interpreter) !void {
     const os_val = interp.global_env.get("os") orelse return error.OsGlobalMissing;
 
     var args_parser_obj = try JSValue.newObject(arena);
-    try args_parser_obj.object.value.set("simple", try native(arena, interp, "simple", argsSimple));
-    try os_val.object.value.set("argsParser", args_parser_obj);
+    try args_parser_obj.asObject().value.set("simple", try native(arena, interp, "simple", argsSimple));
+    try os_val.asObject().value.set("argsParser", args_parser_obj);
 }
 
 const NativeFn = *const fn (ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue;
@@ -62,9 +62,9 @@ fn argsSimple(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: 
     const interp = interpFromCtx(ctx);
 
     const argv_val = arg(args, 0);
-    if (argv_val != .array) return interp.throwError(.type_error, "argv must be an array of strings", .{});
+    if (!argv_val.isArray()) return interp.throwError(.type_error, "argv must be an array of strings", .{});
     const specs_val = arg(args, 1);
-    if (specs_val != .array) return interp.throwError(.type_error, "specs must be an array", .{});
+    if (!specs_val.isArray()) return interp.throwError(.type_error, "specs must be an array", .{});
 
     const argv = try coerceArgv(interp, allocator, argv_val);
     defer {
@@ -79,13 +79,13 @@ fn argsSimple(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: 
     while (true) {
         const tok = parser.next();
         if (tok == .end) break;
-        _ = try tokens.array.value.push(try tokenToJSValue(interp, tok));
+        _ = try tokens.asArray().value.push(try tokenToJSValue(interp, tok));
     }
     return tokens;
 }
 
 fn coerceArgv(interp: *Interpreter, allocator: Allocator, argv_val: JSValue) anyerror![]const [:0]const u8 {
-    const items = argv_val.array.value.toSlice();
+    const items = argv_val.asArray().value.toSlice();
     const out = try allocator.alloc([:0]const u8, items.len);
     var filled: usize = 0;
     errdefer {
@@ -93,35 +93,35 @@ fn coerceArgv(interp: *Interpreter, allocator: Allocator, argv_val: JSValue) any
         allocator.free(out);
     }
     for (items, 0..) |item, i| {
-        if (item != .string) return interp.throwError(.type_error, "argv must contain only strings", .{});
-        out[i] = try allocator.dupeSentinel(u8, item.string.value.data, 0);
+        if (!item.isString()) return interp.throwError(.type_error, "argv must contain only strings", .{});
+        out[i] = try allocator.dupeSentinel(u8, item.asString().value.data, 0);
         filled = i + 1;
     }
     return out;
 }
 
 fn coerceSpecs(interp: *Interpreter, allocator: Allocator, specs_val: JSValue) anyerror![]const zargs.Simple.OptionSpec {
-    const items = specs_val.array.value.toSlice();
+    const items = specs_val.asArray().value.toSlice();
     const out = try allocator.alloc(zargs.Simple.OptionSpec, items.len);
     errdefer allocator.free(out);
 
     for (items, 0..) |item, i| {
-        if (item != .object) return interp.throwError(.type_error, "each spec must be an object", .{});
-        const obj = item.object.value;
+        if (!item.isObject()) return interp.throwError(.type_error, "each spec must be an object", .{});
+        const obj = item.asObject().value;
         var spec: zargs.Simple.OptionSpec = .{};
 
         const short_val = obj.get("short") orelse JSValue.UNDEFINED;
-        if (short_val == .string) {
-            if (short_val.string.value.data.len != 1) return interp.throwError(.range_error, "spec.short must be a single character", .{});
-            spec.short = short_val.string.value.data[0];
-        } else if (short_val != .undefined) {
+        if (short_val.isString()) {
+            if (short_val.asString().value.data.len != 1) return interp.throwError(.range_error, "spec.short must be a single character", .{});
+            spec.short = short_val.asString().value.data[0];
+        } else if (!short_val.isUndefined()) {
             return interp.throwError(.type_error, "spec.short must be a one-character string", .{});
         }
 
         const long_val = obj.get("long") orelse JSValue.UNDEFINED;
-        if (long_val == .string) {
-            spec.long = long_val.string.value.data;
-        } else if (long_val != .undefined) {
+        if (long_val.isString()) {
+            spec.long = long_val.asString().value.data;
+        } else if (!long_val.isUndefined()) {
             return interp.throwError(.type_error, "spec.long must be a string", .{});
         }
 
@@ -130,15 +130,15 @@ fn coerceSpecs(interp: *Interpreter, allocator: Allocator, specs_val: JSValue) a
         }
 
         const kind_val = obj.get("kind") orelse JSValue.UNDEFINED;
-        if (kind_val == .string) {
-            if (std.mem.eql(u8, kind_val.string.value.data, "value")) {
+        if (kind_val.isString()) {
+            if (std.mem.eql(u8, kind_val.asString().value.data, "value")) {
                 spec.kind = .value;
-            } else if (std.mem.eql(u8, kind_val.string.value.data, "flag")) {
+            } else if (std.mem.eql(u8, kind_val.asString().value.data, "flag")) {
                 spec.kind = .flag;
             } else {
                 return interp.throwError(.range_error, "spec.kind must be \"flag\" or \"value\"", .{});
             }
-        } else if (kind_val != .undefined) {
+        } else if (!kind_val.isUndefined()) {
             return interp.throwError(.type_error, "spec.kind must be a string", .{});
         }
 
@@ -151,35 +151,35 @@ fn tokenToJSValue(interp: *Interpreter, tok: zargs.Simple.Token) anyerror!JSValu
     var obj = try interp.gcNewObject();
     switch (tok) {
         .flag => |f| {
-            try obj.object.value.set("type", try interp.gcNewString("flag"));
+            try obj.asObject().value.set("type", try interp.gcNewString("flag"));
             try setOptChar(interp, obj, "short", f.short);
             try setOptStr(interp, obj, "long", f.long);
         },
         .option => |o| {
-            try obj.object.value.set("type", try interp.gcNewString("option"));
+            try obj.asObject().value.set("type", try interp.gcNewString("option"));
             try setOptChar(interp, obj, "short", o.short);
             try setOptStr(interp, obj, "long", o.long);
-            try obj.object.value.set("value", try interp.gcNewString(o.value));
+            try obj.asObject().value.set("value", try interp.gcNewString(o.value));
         },
         .positional => |p| {
-            try obj.object.value.set("type", try interp.gcNewString("positional"));
-            try obj.object.value.set("value", try interp.gcNewString(p));
+            try obj.asObject().value.set("type", try interp.gcNewString("positional"));
+            try obj.asObject().value.set("value", try interp.gcNewString(p));
         },
         .unknown_option => |u| {
-            try obj.object.value.set("type", try interp.gcNewString("unknownOption"));
+            try obj.asObject().value.set("type", try interp.gcNewString("unknownOption"));
             try setOptChar(interp, obj, "short", u.short);
             try setOptStr(interp, obj, "long", u.long);
         },
         .missing_value => |m| {
-            try obj.object.value.set("type", try interp.gcNewString("missingValue"));
+            try obj.asObject().value.set("type", try interp.gcNewString("missingValue"));
             try setOptChar(interp, obj, "short", m.short);
             try setOptStr(interp, obj, "long", m.long);
         },
         .unexpected_value => |uv| {
-            try obj.object.value.set("type", try interp.gcNewString("unexpectedValue"));
+            try obj.asObject().value.set("type", try interp.gcNewString("unexpectedValue"));
             try setOptChar(interp, obj, "short", uv.short);
             try setOptStr(interp, obj, "long", uv.long);
-            try obj.object.value.set("value", try interp.gcNewString(uv.value));
+            try obj.asObject().value.set("value", try interp.gcNewString(uv.value));
         },
         .end => unreachable,
     }
@@ -187,9 +187,9 @@ fn tokenToJSValue(interp: *Interpreter, tok: zargs.Simple.Token) anyerror!JSValu
 }
 
 fn setOptChar(interp: *Interpreter, obj: JSValue, key: []const u8, v: ?u8) !void {
-    if (v) |c| try obj.object.value.set(key, try interp.gcNewString(&[_]u8{c}));
+    if (v) |c| try obj.asObject().value.set(key, try interp.gcNewString(&[_]u8{c}));
 }
 
 fn setOptStr(interp: *Interpreter, obj: JSValue, key: []const u8, v: ?[]const u8) !void {
-    if (v) |s| try obj.object.value.set(key, try interp.gcNewString(s));
+    if (v) |s| try obj.asObject().value.set(key, try interp.gcNewString(s));
 }

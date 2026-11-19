@@ -22,8 +22,8 @@ pub fn install(interpreter: *Interpreter) !void {
     const arena = interpreter.arena_state.allocator();
 
     var toml_obj = try JSValue.newObject(arena);
-    try toml_obj.object.value.set("parse", try native(arena, interpreter, "parse", tomlParse));
-    try toml_obj.object.value.set("stringify", try native(arena, interpreter, "stringify", tomlStringify));
+    try toml_obj.asObject().value.set("parse", try native(arena, interpreter, "parse", tomlParse));
+    try toml_obj.asObject().value.set("stringify", try native(arena, interpreter, "stringify", tomlStringify));
 
     try interpreter.defineGlobal("TOML", toml_obj);
 }
@@ -49,8 +49,8 @@ fn tomlParse(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: [
     _ = this_value;
     const self = interp(ctx);
     const text = arg(args, 0);
-    if (text != .string) return self.throwError(.syntax_error, "TOML.parse requires a string", .{});
-    const value = ztoml.parse(allocator, text.string.value.data) catch |err| switch (err) {
+    if (!text.isString()) return self.throwError(.syntax_error, "TOML.parse requires a string", .{});
+    const value = ztoml.parse(allocator, text.asString().value.data) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         else => return self.throwError(.syntax_error, "Unexpected token in TOML: {t}", .{err}),
     };

@@ -44,7 +44,7 @@ pub fn run(interp: *Interpreter, io: std.Io, stdout: *std.Io.Writer, stderr: *st
             continue;
         };
 
-        if (result != .undefined) {
+        if (!result.isUndefined()) {
             var buf: std.ArrayList(u8) = .empty;
             defer buf.deinit(interp.arena_state.allocator());
             try zinterpreter.inspect.inspect(interp.arena_state.allocator(), &buf, result);

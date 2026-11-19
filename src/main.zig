@@ -179,7 +179,7 @@ pub fn main(init: std.process.Init) !u8 {
                 return 1;
             };
 
-            if (args.print_result and result != .undefined) {
+            if (args.print_result and !result.isUndefined()) {
                 var buf: std.ArrayList(u8) = .empty;
                 defer buf.deinit(interp.arena_state.allocator());
                 try zinterpreter.inspect.inspect(interp.arena_state.allocator(), &buf, result);

@@ -60,7 +60,7 @@ fn failureLabel(err: anyerror) []const u8 {
 /// point (script file, `-e`, REPL) so error output never drifts between
 /// them.
 pub fn printUncaught(allocator: std.mem.Allocator, stderr: *std.Io.Writer, ex: zvalue.JSValue) !void {
-    switch (ex) {
+    switch (ex.unpack()) {
         .@"error" => |box| try stderr.print("Uncaught {s}: {s}\n", .{ box.value.kind.name(), box.value.message }),
         .string => |box| try stderr.print("Uncaught '{s}'\n", .{box.value.data}),
         .number => |n| try stderr.print("Uncaught {d}\n", .{n}),

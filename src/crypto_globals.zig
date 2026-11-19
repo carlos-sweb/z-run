@@ -34,72 +34,72 @@ pub fn install(interp: *Interpreter, io: std.Io) !void {
 
     if (comptime build_options.enable_crypto_uuid) {
         var uuid_obj = try JSValue.newObject(arena);
-        try uuid_obj.object.value.set("v4", try native(arena, ctx, "v4", uuidV4));
-        try uuid_obj.object.value.set("v7", try native(arena, ctx, "v7", uuidV7));
-        try crypto_obj.object.value.set("uuid", uuid_obj);
+        try uuid_obj.asObject().value.set("v4", try native(arena, ctx, "v4", uuidV4));
+        try uuid_obj.asObject().value.set("v7", try native(arena, ctx, "v7", uuidV7));
+        try crypto_obj.asObject().value.set("uuid", uuid_obj);
     }
 
     if (comptime build_options.enable_crypto_random) {
         var random_obj = try JSValue.newObject(arena);
-        try random_obj.object.value.set("bytes", try native(arena, ctx, "bytes", randomBytes));
-        try random_obj.object.value.set("int", try native(arena, ctx, "int", randomIntFn));
-        try random_obj.object.value.set("string", try native(arena, ctx, "string", randomStringFn));
-        try crypto_obj.object.value.set("random", random_obj);
+        try random_obj.asObject().value.set("bytes", try native(arena, ctx, "bytes", randomBytes));
+        try random_obj.asObject().value.set("int", try native(arena, ctx, "int", randomIntFn));
+        try random_obj.asObject().value.set("string", try native(arena, ctx, "string", randomStringFn));
+        try crypto_obj.asObject().value.set("random", random_obj);
     }
 
     if (comptime build_options.enable_crypto_hash) {
         var hash_obj = try JSValue.newObject(arena);
-        try hash_obj.object.value.set("sha256", try native(arena, ctx, "sha256", makeHashFn(.sha256)));
-        try hash_obj.object.value.set("sha512", try native(arena, ctx, "sha512", makeHashFn(.sha512)));
-        try hash_obj.object.value.set("blake3", try native(arena, ctx, "blake3", makeHashFn(.blake3)));
-        try crypto_obj.object.value.set("hash", hash_obj);
+        try hash_obj.asObject().value.set("sha256", try native(arena, ctx, "sha256", makeHashFn(.sha256)));
+        try hash_obj.asObject().value.set("sha512", try native(arena, ctx, "sha512", makeHashFn(.sha512)));
+        try hash_obj.asObject().value.set("blake3", try native(arena, ctx, "blake3", makeHashFn(.blake3)));
+        try crypto_obj.asObject().value.set("hash", hash_obj);
     }
 
     if (comptime build_options.enable_crypto_hmac) {
         var hmac_obj = try JSValue.newObject(arena);
-        try hmac_obj.object.value.set("sha256", try native(arena, ctx, "sha256", hmacSha256Fn));
-        try hmac_obj.object.value.set("sha512", try native(arena, ctx, "sha512", hmacSha512Fn));
-        try crypto_obj.object.value.set("hmac", hmac_obj);
+        try hmac_obj.asObject().value.set("sha256", try native(arena, ctx, "sha256", hmacSha256Fn));
+        try hmac_obj.asObject().value.set("sha512", try native(arena, ctx, "sha512", hmacSha512Fn));
+        try crypto_obj.asObject().value.set("hmac", hmac_obj);
     }
 
     if (comptime build_options.enable_crypto_aead) {
         var aead_obj = try JSValue.newObject(arena);
-        try aead_obj.object.value.set("encrypt", try native(arena, ctx, "encrypt", aeadEncrypt));
-        try aead_obj.object.value.set("decrypt", try native(arena, ctx, "decrypt", aeadDecrypt));
-        try crypto_obj.object.value.set("aead", aead_obj);
+        try aead_obj.asObject().value.set("encrypt", try native(arena, ctx, "encrypt", aeadEncrypt));
+        try aead_obj.asObject().value.set("decrypt", try native(arena, ctx, "decrypt", aeadDecrypt));
+        try crypto_obj.asObject().value.set("aead", aead_obj);
     }
 
     if (comptime build_options.enable_crypto_password) {
         var password_obj = try JSValue.newObject(arena);
-        try password_obj.object.value.set("hash", try native(arena, ctx, "hash", passwordHash));
-        try password_obj.object.value.set("verify", try native(arena, ctx, "verify", passwordVerify));
-        try crypto_obj.object.value.set("password", password_obj);
+        try password_obj.asObject().value.set("hash", try native(arena, ctx, "hash", passwordHash));
+        try password_obj.asObject().value.set("verify", try native(arena, ctx, "verify", passwordVerify));
+        try crypto_obj.asObject().value.set("password", password_obj);
     }
 
     if (comptime build_options.enable_crypto_base32) {
         var base32_obj = try JSValue.newObject(arena);
-        try base32_obj.object.value.set("encode", try native(arena, ctx, "encode", base32Encode));
-        try base32_obj.object.value.set("decode", try native(arena, ctx, "decode", base32Decode));
-        try crypto_obj.object.value.set("base32", base32_obj);
+        try base32_obj.asObject().value.set("encode", try native(arena, ctx, "encode", base32Encode));
+        try base32_obj.asObject().value.set("decode", try native(arena, ctx, "decode", base32Decode));
+        try crypto_obj.asObject().value.set("base32", base32_obj);
     }
 
     if (comptime build_options.enable_crypto_totp) {
         var totp_obj = try JSValue.newObject(arena);
-        try totp_obj.object.value.set("hotp", try native(arena, ctx, "hotp", totpHotp));
-        try totp_obj.object.value.set("totp", try native(arena, ctx, "totp", totpTotp));
-        try totp_obj.object.value.set("totpNow", try native(arena, ctx, "totpNow", totpTotpNow));
-        try totp_obj.object.value.set("verifyTotp", try native(arena, ctx, "verifyTotp", totpVerify));
-        try crypto_obj.object.value.set("totp", totp_obj);
+        try totp_obj.asObject().value.set("hotp", try native(arena, ctx, "hotp", totpHotp));
+        try totp_obj.asObject().value.set("totp", try native(arena, ctx, "totp", totpTotp));
+        try totp_obj.asObject().value.set("totpNow", try native(arena, ctx, "totpNow", totpTotpNow));
+        try totp_obj.asObject().value.set("verifyTotp", try native(arena, ctx, "verifyTotp", totpVerify));
+        try crypto_obj.asObject().value.set("totp", totp_obj);
     }
 
     if (comptime build_options.enable_crypto_jws) {
         var jws_obj = try JSValue.newObject(arena);
-        try jws_obj.object.value.set("sign", try native(arena, ctx, "sign", jwsSign));
-        try jws_obj.object.value.set("verify", try native(arena, ctx, "verify", jwsVerify));
-        try crypto_obj.object.value.set("jws", jws_obj);
+        try jws_obj.asObject().value.set("sign", try native(arena, ctx, "sign", jwsSign));
+        try jws_obj.asObject().value.set("verify", try native(arena, ctx, "verify", jwsVerify));
+        try crypto_obj.asObject().value.set("jws", jws_obj);
     }
 
-    try os_val.object.value.set("crypto", crypto_obj);
+    try os_val.asObject().value.set("crypto", crypto_obj);
 }
 
 const NativeFn = *const fn (ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue;
@@ -119,11 +119,11 @@ fn arg(args: []const JSValue, i: usize) JSValue {
 /// Accepts a JS string (UTF-8 bytes) or any TypedArray view (raw bytes)
 /// -- the same "bytes-like" input real crypto APIs accept.
 fn coerceBytes(rc: *RunCtx, v: JSValue, what: []const u8) anyerror![]const u8 {
-    return switch (v) {
+    return switch (v.unpack()) {
         .string => |box| box.value.data,
         .typed_array => |box| blk: {
             const ta = box.value;
-            const buf_bytes = ta.owner.array_buffer.value.bytes;
+            const buf_bytes = ta.owner.asArrayBuffer().value.bytes;
             const byte_len = ta.len * ta.kind.elemSize();
             break :blk buf_bytes[ta.byte_offset..][0..byte_len];
         },
@@ -132,8 +132,8 @@ fn coerceBytes(rc: *RunCtx, v: JSValue, what: []const u8) anyerror![]const u8 {
 }
 
 fn requireInteger(rc: *RunCtx, v: JSValue, what: []const u8) anyerror!i64 {
-    if (v != .number) return rc.interp.throwError(.type_error, "{s} must be a number", .{what});
-    const n = v.number;
+    if (!v.isNumber()) return rc.interp.throwError(.type_error, "{s} must be a number", .{what});
+    const n = v.asNumber();
     if (!std.math.isFinite(n) or n != @trunc(n)) {
         return rc.interp.throwError(.type_error, "{s} must be an integer", .{what});
     }
@@ -158,7 +158,7 @@ fn requireDigits(rc: *RunCtx, v: JSValue) anyerror!u8 {
 /// Copies `bytes` into a fresh `ArrayBuffer` and wraps it as a `Uint8Array`.
 fn bytesToUint8Array(rc: *RunCtx, bytes: []const u8) !JSValue {
     const buf_val = try rc.interp.gcNewArrayBuffer(bytes.len);
-    @memcpy(buf_val.array_buffer.value.bytes, bytes);
+    @memcpy(buf_val.asArrayBuffer().value.bytes, bytes);
     return rc.interp.gcNewTypedArray(buf_val.retain(), 0, bytes.len, .u8);
 }
 
@@ -196,7 +196,7 @@ fn randomBytes(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args:
 
     const buf_val = try rc.interp.gcNewArrayBuffer(n);
     const source: std.Random.IoSource = .{ .io = rc.io };
-    source.interface().bytes(buf_val.array_buffer.value.bytes);
+    source.interface().bytes(buf_val.asArrayBuffer().value.bytes);
     return rc.interp.gcNewTypedArray(buf_val.retain(), 0, n, .u8);
 }
 
@@ -221,7 +221,7 @@ fn randomStringFn(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, ar
     const len: usize = @intCast(len_i64);
 
     const alphabet_arg = arg(args, 1);
-    const alphabet: ?[]const u8 = if (alphabet_arg == .undefined)
+    const alphabet: ?[]const u8 = if (alphabet_arg.isUndefined())
         null
     else
         try coerceBytes(rc, alphabet_arg, "alphabet");
@@ -280,7 +280,7 @@ fn coerceAeadKey(rc: *RunCtx, v: JSValue) anyerror![zcrypto.aead.key_length]u8 {
 
 fn coerceOptionalAad(rc: *RunCtx, args: []const JSValue, index: usize) anyerror![]const u8 {
     const aad_arg = arg(args, index);
-    return if (aad_arg == .undefined) "" else try coerceBytes(rc, aad_arg, "aad");
+    return if (aad_arg.isUndefined()) "" else try coerceBytes(rc, aad_arg, "aad");
 }
 
 fn aeadEncrypt(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
@@ -438,7 +438,7 @@ fn jwsVerify(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: [
     defer verified.deinit(allocator);
 
     var result = try rc.interp.gcNewObject();
-    try result.object.value.set("header", try rc.interp.gcNewString(verified.header_json));
-    try result.object.value.set("payload", try rc.interp.gcNewString(verified.payload_json));
+    try result.asObject().value.set("header", try rc.interp.gcNewString(verified.header_json));
+    try result.asObject().value.set("payload", try rc.interp.gcNewString(verified.payload_json));
     return result;
 }

@@ -31,15 +31,15 @@ pub fn install(interp: *Interpreter, io: std.Io, args: []const []const u8) !void
     ctx.* = .{ .interp = interp, .io = io };
 
     var os_obj = try JSValue.newObject(arena);
-    try os_obj.object.value.set("readFile", try native(arena, ctx, "readFile", osReadFile));
-    try os_obj.object.value.set("writeFile", try native(arena, ctx, "writeFile", osWriteFile));
-    try os_obj.object.value.set("exit", try native(arena, ctx, "exit", osExit));
+    try os_obj.asObject().value.set("readFile", try native(arena, ctx, "readFile", osReadFile));
+    try os_obj.asObject().value.set("writeFile", try native(arena, ctx, "writeFile", osWriteFile));
+    try os_obj.asObject().value.set("exit", try native(arena, ctx, "exit", osExit));
 
     var args_arr = try JSValue.newArray(arena);
     for (args) |a| {
-        _ = try args_arr.array.value.push(try JSValue.newString(arena, a));
+        _ = try args_arr.asArray().value.push(try JSValue.newString(arena, a));
     }
-    try os_obj.object.value.set("args", args_arr);
+    try os_obj.asObject().value.set("args", args_arr);
 
     try interp.defineGlobal("os", os_obj);
 }
@@ -62,8 +62,8 @@ fn arg(args: []const JSValue, i: usize) JSValue {
 /// path/content is a catchable TypeError, not a coercion (narrow and
 /// explicit beats silently stringifying an object into a filename).
 fn requireString(rc: *RunCtx, v: JSValue, what: []const u8) anyerror![]const u8 {
-    if (v != .string) return rc.interp.throwError(.type_error, "{s} must be a string", .{what});
-    return v.string.value.data;
+    if (!v.isString()) return rc.interp.throwError(.type_error, "{s} must be a string", .{what});
+    return v.asString().value.data;
 }
 
 fn osReadFile(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []const JSValue) anyerror!JSValue {
@@ -99,7 +99,7 @@ fn osExit(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: []co
     _ = allocator;
     _ = this_value;
     _ = ctx;
-    const code: u8 = switch (arg(args, 0)) {
+    const code: u8 = switch (arg(args, 0).unpack()) {
         .number => |n| if (n >= 0 and n <= 255) @intFromFloat(n) else 1,
         .undefined => 0,
         else => 1,
