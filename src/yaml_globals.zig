@@ -22,8 +22,8 @@ pub fn install(interpreter: *Interpreter) !void {
     const arena = interpreter.arena_state.allocator();
 
     var yaml_obj = try JSValue.newObject(arena);
-    try yaml_obj.object.value.set("parse", try native(arena, interpreter, "parse", yamlParse));
-    try yaml_obj.object.value.set("stringify", try native(arena, interpreter, "stringify", yamlStringify));
+    try yaml_obj.asObject().value.set("parse", try native(arena, interpreter, "parse", yamlParse));
+    try yaml_obj.asObject().value.set("stringify", try native(arena, interpreter, "stringify", yamlStringify));
 
     try interpreter.defineGlobal("YAML", yaml_obj);
 }
@@ -50,8 +50,8 @@ fn yamlParse(ctx: *anyopaque, allocator: Allocator, this_value: JSValue, args: [
     _ = this_value;
     const self = interp(ctx);
     const text = arg(args, 0);
-    if (text != .string) return self.throwError(.syntax_error, "YAML.parse requires a string", .{});
-    const value = zyaml.parse(allocator, text.string.value.data) catch |err| switch (err) {
+    if (!text.isString()) return self.throwError(.syntax_error, "YAML.parse requires a string", .{});
+    const value = zyaml.parse(allocator, text.asString().value.data) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         else => return self.throwError(.syntax_error, "Unexpected token in YAML: {t}", .{err}),
     };
