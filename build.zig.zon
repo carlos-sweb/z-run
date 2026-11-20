@@ -14,8 +14,8 @@
     },
     .dependencies = .{
         .zinterpreter = .{
-            .url = "https://github.com/carlos-sweb/z-interpreter/archive/refs/tags/v0.4.6.tar.gz",
-            .hash = "zinterpreter-0.2.1-xWdFa9aWIAA32W8mtWL5cRpxcN05VjkFoZXXWZpXuiHN",
+            .url = "https://github.com/carlos-sweb/z-interpreter/archive/refs/tags/v0.4.7.tar.gz",
+            .hash = "zinterpreter-0.2.1-xWdFaynnIABodA2EFEcz1j4rOkg7EYPomeLNDOabUUwx",
         },
         .zvalue = .{
             .url = "https://github.com/carlos-sweb/z-value/archive/refs/tags/v0.1.8.tar.gz",
