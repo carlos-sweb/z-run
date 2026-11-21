@@ -176,3 +176,22 @@ test "short-option bundling: -e absorbs the rest of its own bundle as the value 
     try testing.expectEqual(.eval, args.mode);
     try testing.expectEqualStrings("p", args.eval_code.?);
 }
+
+test "--engine defaults to bytecode, supports ast and tree, rejects unknown" {
+    var a = Arena.init();
+    defer a.deinit();
+
+    const def = (try a.parse(&.{"script.js"})).?;
+    try testing.expectEqual(.bytecode, def.engine);
+
+    const bc = (try a.parse(&.{ "--engine=bytecode", "script.js" })).?;
+    try testing.expectEqual(.bytecode, bc.engine);
+
+    const ast = (try a.parse(&.{ "--engine=ast", "script.js" })).?;
+    try testing.expectEqual(.tree, ast.engine);
+
+    const tr = (try a.parse(&.{ "--engine=tree", "script.js" })).?;
+    try testing.expectEqual(.tree, tr.engine);
+
+    try testing.expectEqual(null, try a.parse(&.{ "--engine=unknown", "script.js" }));
+}
